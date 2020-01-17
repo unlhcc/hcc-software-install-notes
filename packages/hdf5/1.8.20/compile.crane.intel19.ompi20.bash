@@ -1,0 +1,19 @@
+#!/bin/bash
+
+module load compiler/intel/19 openmpi/2.0
+
+make clean && make distclean
+
+CC=mpicc \
+CFLAGS="-DMPICH_IGNORE_CXX_SEEK" \
+FC=mpif90 \
+FCFLAGS="-DMPICH_IGNORE_CXX_SEEK" \
+CXX=mpicxx \
+CXXFLAGS="-DMPICH_IGNORE_CXX_SEEK" \
+
+./configure --prefix=/util/opt/hdf5/1.8.20/openmpi/2.0.2/intel/19.0.1 \
+  --enable-fortran --enable-parallel \
+  --with-szlib=/util/opt/szip/2.1/intel/19 \
+  --with-zlib=/util/opt/zlib/1.2/intel/19
+
+make -j 4 install
