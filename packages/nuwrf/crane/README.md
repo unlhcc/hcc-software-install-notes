@@ -7,12 +7,18 @@ The basic steps are:
 2.  Unzip the NU-WRF package, i.e. `tar -zxvf nu-wrf_v9p3-wrf391-lis72.tgz`
 3.  Place the `crane.cfg` file in the unzipped directory.
 4.  Place the `set_module_env.bash` file in the `scripts/other/` directory, overwriting the original.
-5.  The build can take several hours and requires a fair amount of RAM, so start an
+5.  Several source files require patching to build successfully.  Place the `patch.txt` file in the
+    top level directory (parallel to `build.sh`) and run the command
+    ```
+    patch -p1 < patch.txt
+    ```
+    The patch only needs to be applied once.
+6.  The build can take several hours and requires a fair amount of RAM, so start an
     interactive job by running 
     ```
     srun --pty --qos=short --mem=8gb --time=6:00:00 $SHELL
     ```
-6.  In the NU-WRF directory, run
+7.  In the NU-WRF directory, run
 
     ```
     export NUWRFDIR=$PWD

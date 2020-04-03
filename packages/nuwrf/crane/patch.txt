@@ -1,0 +1,3202 @@
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/scripts/python/build/build.py ./scripts/python/build/build.py
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/scripts/python/build/build.py	2019-10-02 19:07:01.000000000 -0500
++++ ./scripts/python/build/build.py	2020-03-27 20:20:52.000000000 -0500
+@@ -207,12 +207,12 @@
+         if target == "lis":
+             with open("lis/make/configure.lis", "a") as f:
+                 f.write("LDFLAGS = $(WRF_ESMF_LIBS) ")
+-                f.write("-L$(LIB_GRIBAPI) -lgrib_api_f90 -lgrib_api ")
++                f.write("-L$(LIB_GRIBAPI) -lgrib_api_f90 -lgrib_api -ljasper ")
+                 f.write("-L$(LIB_NETCDF) -lnetcdff -lnetcdf ")
+                 f.write("-L$(LIB_HDFEOS) -lhdfeos -lGctp ")
+                 f.write("-L$(LIB_HDF4) -lmfhdf -ldf -ljpeg ")
+                 f.write("-L$(LIB_HDF5) -lhdf5_fortran -lhdf5_hl -lhdf5 ")
+-                f.write("-lm -L$(LIB_ZLIB) -lz\n")
++                f.write("-lm -L$(LIB_ZLIB) -lz -lsz\n")
+ 
+             # Empty file to allow compilation of LIS
+             u.sp_call("touch configure.wrf")
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WPS/arch/Config.pl ./WPS/arch/Config.pl
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WPS/arch/Config.pl	2019-05-22 08:13:14.000000000 -0500
++++ ./WPS/arch/Config.pl	2020-03-27 17:31:33.000000000 -0500
+@@ -106,7 +106,7 @@
+    printf "Found Jasper environment variables for GRIB2 support...\n";
+    printf("  \$JASPERLIB = %s\n",$ENV{JASPERLIB});
+    printf("  \$JASPERINC = %s\n",$ENV{JASPERINC});
+-   $sw_jasperlib_path = "-L$ENV{JASPERLIB} -ljasper -lpng -lz"; 
++   $sw_jasperlib_path = "-L$ENV{JASPERLIB} -ljasper -lpng -lz -lsz"; 
+    $sw_jasperinc_path = "-I$ENV{JASPERINC}"; 
+ }
+ else
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WPS/arch/configure.defaults ./WPS/arch/configure.defaults
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WPS/arch/configure.defaults	2019-05-22 08:13:14.000000000 -0500
++++ ./WPS/arch/configure.defaults	2020-03-27 17:32:24.000000000 -0500
+@@ -240,7 +240,7 @@
+ F77FLAGS            = -FI -convert big_endian
+ FCSUFFIX            = 
+ FNGFLAGS            = $(FFLAGS)
+-LDFLAGS             = 
++LDFLAGS             = -qopenmp
+ CFLAGS              = -w
+ CPP                 = /lib/cpp -P -traditional
+ CPPFLAGS            = -D_UNDERSCORE -DBYTESWAP -DLINUX -DIO_NETCDF -DIO_BINARY -DIO_GRIB1 -DBIT32 CONFIGURE_MPI
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WPS/arch/preamble ./WPS/arch/preamble
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WPS/arch/preamble	2019-05-22 08:13:14.000000000 -0500
++++ ./WPS/arch/preamble	2020-03-27 17:32:59.000000000 -0500
+@@ -16,8 +16,8 @@
+ NETCDF4_IO_OPTS = -DUSE_NETCDF4_FEATURES -DWRFIO_NCD_LARGE_FILE_SUPPORT
+ GPFS            =
+ CURL            =
+-HDF5            =
+-ZLIB            =
++HDF5            = -lhdf5_hl -lhdf5_fortran -lhdf5
++ZLIB            = -lz -lsz
+ DEP_LIB_PATH    = CONFIGURE_DEP_LIB_PATH
+ NETCDF4_DEP_LIB = $(DEP_LIB_PATH) $(HDF5) $(ZLIB) $(GPFS) $(CURL)
+ 
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/arch/Config_new.pl ./WRFV3/arch/Config_new.pl
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/arch/Config_new.pl	2019-05-22 08:13:14.000000000 -0500
++++ ./WRFV3/arch/Config_new.pl	2020-03-27 17:24:45.000000000 -0500
+@@ -547,7 +547,7 @@
+       { $_ =~ s/CONFIGURE_HDF4_LIB_PATH//g ;
+ 	 }
+     if ( $sw_hdf5_path ) 
+-      { $_ =~ s:CONFIGURE_HDF5_LIB_PATH:-L$sw_hdf5_path/lib -lhdf5_fortran -lhdf5: ;
++      { $_ =~ s:CONFIGURE_HDF5_LIB_PATH:-L$sw_hdf5_path/lib -lhdf5_hl -lhdf5_fortran -lhdf5: ;
+ 	 }
+     else                   
+       { $_ =~ s/CONFIGURE_HDF5_LIB_PATH//g ;
+@@ -560,7 +560,7 @@
+ 	 }
+ 
+     if ( $sw_zlib_path ) 
+-      { $_ =~ s:CONFIGURE_ZLIB_LIB_PATH:-L$sw_zlib_path/lib -lz : ;
++      { $_ =~ s:CONFIGURE_ZLIB_LIB_PATH:-L$sw_zlib_path/lib -lz -ljasper -lsz : ;
+ 	 }
+     else                   
+       { $_ =~ s/CONFIGURE_ZLIB_LIB_PATH//g ;
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/arch/configure_new.defaults ./WRFV3/arch/configure_new.defaults
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/arch/configure_new.defaults	2019-05-22 08:13:14.000000000 -0500
++++ ./WRFV3/arch/configure_new.defaults	2020-03-27 17:21:48.000000000 -0500
+@@ -296,8 +296,8 @@
+ DESCRIPTION     =       INTEL ($SFC/$SCC)
+ DMPARALLEL      =       # 1
+ OMPCPP          =       # -D_OPENMP
+-OMP             =       # -openmp -fpp -auto
+-OMPCC           =       # -openmp -fpp -auto
++OMP             =       # -qopenmp -fpp -auto
++OMPCC           =       # -qopenmp -fpp -auto
+ SFC             =       ifort
+ SCC             =       icc
+ CCOMP           =       icc
+@@ -388,8 +388,8 @@
+ DESCRIPTION     =       INTEL ($SFC/$SCC): Xeon (SNB with AVX mods)
+ DMPARALLEL      =       # 1
+ OMPCPP          =       # -D_OPENMP
+-OMP             =       # -openmp -fpp -auto
+-OMPCC           =       # -openmp -fpp -auto
++OMP             =       # -qopenmp -fpp -auto
++OMPCC           =       # -qopenmp -fpp -auto
+ SFC             =       ifort 
+ SCC             =       icc 
+ CCOMP           =       icc 
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/phys/module_mp_gsfcgce_4ice_nuwrf.F ./WRFV3/phys/module_mp_gsfcgce_4ice_nuwrf.F
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/phys/module_mp_gsfcgce_4ice_nuwrf.F	2019-05-22 08:13:14.000000000 -0500
++++ ./WRFV3/phys/module_mp_gsfcgce_4ice_nuwrf.F	2020-03-27 17:28:55.000000000 -0500
+@@ -41,7 +41,7 @@
+ !   USE module_domain, ONLY : HISTORY_ALARM, Is_alarm_tstep
+    USE module_mp_radar
+ 
+-   INTEGER, PARAMETER, PRIVATE:: CHUNK = 16
++   INTEGER, PARAMETER, PRIVATE:: chunk = 16
+ 
+    LOGICAL, EXTERNAL :: wrf_dm_on_monitor
+ 
+@@ -324,20 +324,20 @@
+   REAL    :: hour
+   REAL    :: dth, dqv, dqrest, dqall, dqall1, rhotot, a1, a2 
+  
+-  REAL, DIMENSION(CHUNK, kms:kme):: th2d, qv2d, ql2d, qr2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: qi2d, qs2d, qg2d, qh2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: rho2d, pii2d, p2d, w2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: refc2d, refr2d, refi2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: refs2d, refg2d, refh2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: physc2d, physe2d, physd2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: physs2d, physm2d, physf2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: acphysc2d, acphyse2d, acphysd2d
+-  REAL, DIMENSION(CHUNK, kms:kme):: acphyss2d, acphysm2d, acphysf2d
+-  REAL, DIMENSION(CHUNK) :: xland1d
+-  REAL, DIMENSION(CHUNK, kms:kme):: refl_10cm2d
++  REAL, DIMENSION(chunk, kms:kme):: th2d, qv2d, ql2d, qr2d
++  REAL, DIMENSION(chunk, kms:kme):: qi2d, qs2d, qg2d, qh2d
++  REAL, DIMENSION(chunk, kms:kme):: rho2d, pii2d, p2d, w2d
++  REAL, DIMENSION(chunk, kms:kme):: refc2d, refr2d, refi2d
++  REAL, DIMENSION(chunk, kms:kme):: refs2d, refg2d, refh2d
++  REAL, DIMENSION(chunk, kms:kme):: physc2d, physe2d, physd2d
++  REAL, DIMENSION(chunk, kms:kme):: physs2d, physm2d, physf2d
++  REAL, DIMENSION(chunk, kms:kme):: acphysc2d, acphyse2d, acphysd2d
++  REAL, DIMENSION(chunk, kms:kme):: acphyss2d, acphysm2d, acphysf2d
++  REAL, DIMENSION(chunk) :: xland1d
++  REAL, DIMENSION(chunk, kms:kme):: refl_10cm2d
+ #if ( WRF_CHEM == 1)
+-  REAL, DIMENSION(CHUNK, kms:kme, num_go):: aero3d
+-  REAL, DIMENSION(CHUNK, kms:kme):: icn_diag2d, nc_diag2d
++  REAL, DIMENSION(chunk, kms:kme, num_go):: aero3d
++  REAL, DIMENSION(chunk, kms:kme):: icn_diag2d, nc_diag2d
+ #endif
+ 
+ !NUWRF BEGIN
+@@ -480,18 +480,18 @@
+ !$OMP PRIVATE ( aero3d, icn_diag2d, nc_diag2d) &
+ #endif
+ !$OMP SCHEDULE(dynamic,1)
+-      DO ip = 1,((1+(ite-its+1)/CHUNK)*CHUNK)*(jte-jts+1),CHUNK ! i-dim contains '(1+(ite-its+1)/CHUNK)' blocks of size 'CHUNK'
+-       j  = jts+(ip-1)/((1+(ite-its+1)/CHUNK)*CHUNK)
++      DO ip = 1,((1+(ite-its+1)/chunk)*chunk)*(jte-jts+1),chunk ! i-dim contains '(1+(ite-its+1)/chunk)' blocks of size 'chunk'
++       j  = jts+(ip-1)/((1+(ite-its+1)/chunk)*chunk)
+        IF ( j .ge. jts .and. j .le. jte ) THEN ! j: [jts, jte]
+-        ii = its+mod((ip-1),((1+(ite-its+1)/CHUNK)*CHUNK)) ! ii: [its, ((1+(ite-its+1)/CHUNK)*CHUNK)]
++        ii = its+mod((ip-1),((1+(ite-its+1)/chunk)*chunk)) ! ii: [its, ((1+(ite-its+1)/chunk)*chunk)]
+ 
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic -1
+           xland1d(ic) = xland(i,j)
+         ENDDO
+ 
+          do k = kts, kte
+-          DO ic=1,min(CHUNK,ite-ii+1) 
++          DO ic=1,min(chunk,ite-ii+1) 
+             i = ii+ic -1
+             th2d(ic,k) = th(i,k,j)
+             qv2d(ic,k) = qv(i,k,j)
+@@ -530,7 +530,7 @@
+           ENDDO
+          enddo
+ 
+-   IF ( min(CHUNK,ite-ii+1) .gt. 0 ) THEN
++   IF ( min(chunk,ite-ii+1) .gt. 0 ) THEN
+    call saticel_s( dt_in, dx, itaobraun, istatmin,               &
+                    new_ice_sat, id, improve,                     &
+                    th2d, qv2d, ql2d, qr2d,                       &
+@@ -554,12 +554,12 @@
+                    chem_opt,                                     &
+                    gsfcgce_gocart_coupling                       &
+ #endif   
+-                  ,ii, j, min(CHUNK,ite-ii+1))
++                  ,ii, j, min(chunk,ite-ii+1))
+ !NUWRF END
+    ENDIF
+ 
+          do k = kts, kte
+-          DO ic=1,min(CHUNK,ite-ii+1)
++          DO ic=1,min(chunk,ite-ii+1)
+             i = ii+ic -1
+             th(i,k,j) = th2d(ic,k)
+             qv(i,k,j) = qv2d(ic,k)
+@@ -2223,7 +2223,7 @@
+   integer, intent(in) :: ii,j,irestrict ! global i-index inside local i-loops: ii+i-1
+   integer i, k, kp     
+ 
+-  real, dimension(CHUNK) :: afcp, alvr, ascp, avcp, rp0, pi0, pir,  &
++  real, dimension(chunk) :: afcp, alvr, ascp, avcp, rp0, pi0, pir,  &
+                             pr0, r00, rrs, rrq, fv0, fvs, cp409, &
+                             rr0, zrr, zsr, zgr, zhr, &
+                             cp580, cs580, cv409, vscf, vgcf, vgcf2, &
+@@ -2244,26 +2244,26 @@
+   real :: vap_frac
+ !JJS 20090623 ^^^^^
+ 
+-  real, dimension (CHUNK, kts:kte) ::  fv
+-  real, dimension (CHUNK, kts:kte) ::  dpt, dqv
+-  real, dimension (CHUNK, kts:kte) ::  qcl, qrn,             &
++  real, dimension (chunk, kts:kte) ::  fv
++  real, dimension (chunk, kts:kte) ::  dpt, dqv
++  real, dimension (chunk, kts:kte) ::  qcl, qrn,             &
+                                        qci, qcs, qcg, qch
+-  real, dimension (CHUNK, kts:kte) ::  qsz, qgz,qhz
++  real, dimension (chunk, kts:kte) ::  qsz, qgz,qhz
+ !JJS
+-  real, dimension (CHUNK, kms:kme), INTENT(INOUT)                       &
++  real, dimension (chunk, kms:kme), INTENT(INOUT)                       &
+                                                ::  ptwrf, qvwrf,       &
+                                                    qlwrf, qrwrf,       &
+                                                    qiwrf, qswrf,       &
+                                                    qgwrf, qhwrf
+ 
+ !JJS in MKS
+-  real, dimension (CHUNK, kms:kme), INTENT(IN   )                      &
++  real, dimension (chunk, kms:kme), INTENT(IN   )                      &
+                                               ::  rho_mks,            &
+                                                   pi_mks,             &
+                                                   p0_mks,             &
+                                                   w_mks
+ !JJS      COMMON /BADV/
+-  real, dimension (CHUNK) ::                                  &              
++  real, dimension (chunk) ::                                  &              
+            vg,      zg,       &
+            ps,      pg,       &
+           prn,     psn,       &
+@@ -2281,7 +2281,7 @@
+         asss
+ 
+ !JJS      COMMON/BSAT/
+-  real, dimension (CHUNK) ::        &
++  real, dimension (chunk) ::        &
+         praut,   pracw,       &
+          psfw,    psfi,       &
+         dgacs,   dgacw,       &
+@@ -2297,7 +2297,7 @@
+           egs
+ 
+ !JJS      COMMON/BSAT1/
+-  real, dimension (CHUNK) ::        &
++  real, dimension (chunk) ::        &
+            pt,      qv,       &
+            qc,      qr,       &
+            qi,      qs,       &
+@@ -2316,7 +2316,7 @@
+        
+ 
+ !JJS      COMMON/BSAT2H/
+-  real, dimension (CHUNK) ::        &
++  real, dimension (chunk) ::        &
+          phfr,phmlt,                          & !4ice
+          dhacw,qhacw,dhacr,qhacr,whacr,       & !4ice
+          dhaci,whaci,dhacs,phacs,whacs,       & !4ice
+@@ -2324,33 +2324,33 @@
+          pvaph,primh,scv,dwv,tca                !4ice
+ 
+ !JJS      COMMON/B5/ 
+-  real, dimension (CHUNK,kts:kte) ::  rho !only in satice in cgs
++  real, dimension (chunk,kts:kte) ::  rho !only in satice in cgs
+ 
+ !JJS      COMMON/B6/
+-  real, dimension (CHUNK, kts:kte) ::  p0, pi, f0, ww1
+-  real, dimension (CHUNK, kts:kte) ::    & 
++  real, dimension (chunk, kts:kte) ::  p0, pi, f0, ww1
++  real, dimension (chunk, kts:kte) ::    & 
+            fd,      fe,           &
+            st,      sv,           &
+            sq,      sc,           &
+            se,     sqa
+ 
+ !JJS      COMMON/BI/ IT(its:ite,jts:jte), ICS(its:ite,jts:jte,4)
+-  integer, dimension (CHUNK) ::        it  
+-  integer, dimension (CHUNK, 4) ::    ics 
++  integer, dimension (chunk) ::        it  
++  integer, dimension (chunk, 4) ::    ics 
+ 
+   integer :: i24h
+   real :: r2is, r2ig, r2ih
+   
+ 
+ !JJS      COMMON/MICRO/
+-  real, dimension (CHUNK, kms:kme), INTENT(INOUT)  ::  &
++  real, dimension (chunk, kms:kme), INTENT(INOUT)  ::  &
+           physc,   physe,   physd,                  &
+           physs,   physm,   physf,                  &
+           acphysc,   acphyse,   acphysd,            &
+           acphyss,   acphysm,   acphysf
+ 
+ ! EMK NUWRF
+-  real, dimension(CHUNK, kts:kte) :: dbz
++  real, dimension(chunk, kts:kte) :: dbz
+ 
+ !JJS  9/30/2009 for Steve's new improvement
+ 
+@@ -2360,7 +2360,7 @@
+   real     ::  ftnw, ftnwmin
+   real     ::  xssi, fssi, rssi, xsubi, wssi
+   real     ::  dmicrons, dmicrong, dvair, alpha
+-  real,   dimension (CHUNK) :: tairN, tairI,    &
++  real,   dimension (chunk) :: tairN, tairI,    &
+                                           ftns,  ftng,    &
+                                          ftns0, ftng0,    &
+                                          ftnh,  ftnh0,    &
+@@ -2374,7 +2374,7 @@
+                                           pracg,qracg,    &
+                                           qrimh,pg2h      !4ice revised
+ 
+-  real,   dimension (CHUNK) :: y1, y2, y3, y4,  &
++  real,   dimension (chunk) :: y1, y2, y3, y4,  &
+                                y5, y6, y7, y8 
+ ! for Xiping's new dbz code
+   real     ::  hfact, sfact, yy1
+@@ -2385,12 +2385,12 @@
+   real     ::  qgz2, qhz2
+ 
+   real :: r11t, r19t, r19at, r30t, r33t
+-  real, dimension(CHUNK) :: r7rf, r8rf, r9rf, r16rf
+-  real, dimension(CHUNK) :: r101r, r102rf, r191r, r192rf, r192rf2
+-  real, dimension(CHUNK) :: r231r, r232rf
+-  real, dimension(CHUNK) :: h9r, h10r, h14r, h15ar, h16r, h17r, h17aq,   &
++  real, dimension(chunk) :: r7rf, r8rf, r9rf, r16rf
++  real, dimension(chunk) :: r101r, r102rf, r191r, r192rf, r192rf2
++  real, dimension(chunk) :: r231r, r232rf
++  real, dimension(chunk) :: h9r, h10r, h14r, h15ar, h16r, h17r, h17aq,   &
+               h19aq, h19rt, h10ar, h20t, h20bq
+-  real, dimension(CHUNK) :: bin_factor, rim_frac
++  real, dimension(chunk) :: bin_factor, rim_frac
+   real     :: term1, term2, fdwv, dwv0  !JDC water vapor diffusivity correction term
+   integer  :: iter
+ 
+@@ -2401,9 +2401,9 @@
+ ! for inline Gocart coupling
+   INTEGER,      INTENT(IN   )    ::   gid
+   INTEGER, PARAMETER :: num_go = 14  ! number of the gocart aerosol species
+-  REAL, DIMENSION( CHUNK, kms:kme, num_go), intent(in) :: aero
+-  REAL, DIMENSION( CHUNK, kms:kme ), intent(out) :: icn_diag !IN concentration [#/Litre]
+-  REAL, DIMENSION( CHUNK, kms:kme ), intent(out) :: nc_diag !cloud concentration [#/cm3]
++  REAL, DIMENSION( chunk, kms:kme, num_go), intent(in) :: aero
++  REAL, DIMENSION( chunk, kms:kme ), intent(out) :: icn_diag !IN concentration [#/Litre]
++  REAL, DIMENSION( chunk, kms:kme ), intent(out) :: nc_diag !cloud concentration [#/cm3]
+   integer,intent(in) :: chem_opt ! EMK
+   integer,intent(in) :: gsfcgce_gocart_coupling ! EMK
+ 
+@@ -2412,8 +2412,8 @@
+   real :: e_sat, e_dry  !saturated and dry air water vapor [hPa, mb]
+   real :: rh_rad     ! relative humidity [%]
+   real :: super_sat  !super saturation [%]
+-  real :: ccn_out(CHUNK)  ! CCN conc [#/cm3] ! EMK TEST
+-  real :: icn_out(CHUNK)  ! IN conc [#/Litter] ! EMK TEST
++  real :: ccn_out(chunk)  ! CCN conc [#/cm3] ! EMK TEST
++  real :: icn_out(chunk)  ! IN conc [#/Litter] ! EMK TEST
+   real :: P_liu_daum  ! autoconversion rate [g/cm3 s-1]    !
+   real :: re_liu_daum ! effective radius of cloud [micron]   !
+   real,parameter :: min_icn = 0.01 !minimum # conc of IN [#/Litre]
+@@ -2422,11 +2422,11 @@
+ #endif
+ 
+ !JJS 20140226  variables for the calculation of effective radius of cloud species
+-  real, dimension (CHUNK, kms:kme) , INTENT(INOUT   )                 &
++  real, dimension (chunk, kms:kme) , INTENT(INOUT   )                 &
+                                               ::  refc, refr,         &
+                                                   refi, refs,         &
+                                                   refg, refh
+-  REAL , DIMENSION( CHUNK ) , INTENT(IN)   :: XLAND
++  REAL , DIMENSION( chunk ) , INTENT(IN)   :: XLAND
+   real, parameter :: roqi = 0.9179    ! ice density
+   real, parameter :: ccn_over_land = 1500  ! [#/cm3] climatological value
+   real, parameter :: ccn_over_water = 150  ! [#/cm3] climatological value
+@@ -2438,7 +2438,7 @@
+ !NUWRF END
+ 
+ !+---+-----------------------------------------------------------------+
+-  REAL, DIMENSION(CHUNK, kms:kme), INTENT(INOUT):: refl_10cm  ! GT
++  REAL, DIMENSION(chunk, kms:kme), INTENT(INOUT):: refl_10cm  ! GT
+ 
+   LOGICAL, OPTIONAL, INTENT(IN) :: diagflag
+   INTEGER, OPTIONAL, INTENT(IN) :: do_radar_ref
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/phys/module_ra_goddard_2014.F ./WRFV3/phys/module_ra_goddard_2014.F
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/phys/module_ra_goddard_2014.F	2019-05-22 08:13:14.000000000 -0500
++++ ./WRFV3/phys/module_ra_goddard_2014.F	2020-03-27 17:28:56.000000000 -0500
+@@ -129,7 +129,7 @@
+ 
+  implicit none
+ 
+-  INTEGER, PARAMETER, PRIVATE:: CHUNK = 16
++  INTEGER, PARAMETER, PRIVATE:: chunk = 16
+ 
+ !
+ ! encapsulation control
+@@ -1430,7 +1430,7 @@
+  integer :: dk_half    !maximum dimension for k (half level)
+  integer :: i24h
+ 
+- real, dimension( CHUNK )  :: &
++ real, dimension( chunk )  :: &
+     cosz, &  ! cosine of solar zenith angle (0~1)
+   rsuvbm, &  ! surface albedo for direct UV-VIS radiation (-)
+   rsuvdf, &  ! surface albedo for diffuse UV-VIS radiation (-)
+@@ -1441,20 +1441,20 @@
+     p400, &  ! pressure criteria for upper
+     p700     ! pressure criteir for middle
+ 
+- real, dimension( CHUNK, nband_lw ) :: emis1d !IR emissivity (-)
++ real, dimension( chunk, nband_lw ) :: emis1d !IR emissivity (-)
+ 
+- integer, dimension( CHUNK ) ::  &
++ integer, dimension( chunk ) ::  &
+    ict, & ! 400mb level indice
+    icb    ! 700mb level indice
+ 
+ !
+ ! Full-level 1D parameters
+ !
+- real, dimension( CHUNK, kts-1:kte ) :: &
++ real, dimension( chunk, kts-1:kte ) :: &
+      p8w1d, &  ! pressure in full level (mb or hPa)
+      t8w1d     ! temperature in full level (K)
+ 
+- real, dimension( CHUNK, kts-1:kte )  :: &
++ real, dimension( chunk, kts-1:kte )  :: &
+    flx, & !flux fraction (-) or actual flux (W/m2) 
+   flxd, & !donwelling flux fraction [-] (for shortwave) , but actual flux [W/m2] (for longwave)
+   flxu    !upwelling flux fraction [-] (for shortwave) , but actual flux [W/m2] (for longwave) 
+@@ -1462,7 +1462,7 @@
+ !
+ ! Half-level 1D parameters
+ !
+- real, dimension( CHUNK, kts:kte ) ::   &
++ real, dimension( chunk, kts:kte ) ::   &
+      tten1d, &  ! temperature tendency (K/sec)
+        sh1d, &  ! specific humidity (-)
+         p1d, &  ! pressure (mb or hPa)
+@@ -1472,7 +1472,7 @@
+        o31d, &  ! ozone mixing ratio [kg/kg]
+      fcld1d     ! cloud fraction
+ 
+- real,  dimension( CHUNK, kts:kte, id_hmax ) :: &
++ real,  dimension( chunk, kts:kte, id_hmax ) :: &
+          q1d ,& ! condensate mass concentration [g/m3]
+          re1d   ! particle effective radius [um]
+ 
+@@ -1481,28 +1481,28 @@
+ !     salb_gocart,  & ! single scattering albedo [-]
+ !     asym_gocart     ! asymetry parameter [-]
+ 
+- real, dimension( CHUNK, kts:kte, nband_sw ) :: &
++ real, dimension( chunk, kts:kte, nband_sw ) :: &
+   taucl_sw, &  ! hydrometeor optical depth for SW bands 
+   ssacl_sw, &  ! hydrometeor single scattering albedo for SW bands
+   asycl_sw     ! hydrometeor asymetry factor for SW bands
+ 
+- real, dimension( CHUNK, kts:kte, nband_lw ) ::  &
++ real, dimension( chunk, kts:kte, nband_lw ) ::  &
+   taucl_lw, &  ! hydrometeor optical depth for LW bands
+   ssacl_lw, &  ! hydrometeor single scattering albedo for LW bands
+   asycl_lw     ! hydrometeor asymetry factor for LW bands
+ 
+- real, dimension( CHUNK, kts:kte, nband_sw ) :: &
++ real, dimension( chunk, kts:kte, nband_sw ) :: &
+   taual_sw, &  ! aerosol optical depth for SW bands 
+   ssaal_sw, &  ! aerosol single scattering albedo for SW bands
+   asyal_sw     ! aerosol asymetry factor for SW bands
+ 
+- real, dimension( CHUNK, kts:kte, nband_lw ) ::  &
++ real, dimension( chunk, kts:kte, nband_lw ) ::  &
+   taual_lw, &  ! aerosol optical depth for LW bands
+   ssaal_lw, &  ! aerosol single scattering albedo for LW bands
+   asyal_lw     ! aerosol asymetry factor for LW bands
+ 
+ #if (WRF_CHEM == 1)
+- real, dimension( CHUNK, kts:kte, num_go) :: aero1d  !aerosol mass conc [g/m3] 1D reverse k order  (half layer)         
++ real, dimension( chunk, kts:kte, num_go) :: aero1d  !aerosol mass conc [g/m3] 1D reverse k order  (half layer)         
+ 
+ ! type(particle_gocart), dimension( kts:kte ) ::   &
+ !                     a1d  ! aerosol mass concentration [ ]
+@@ -1512,7 +1512,7 @@
+ !
+ ! surface 0D parameters
+ !
+- real :: flxd_surf(CHUNK,1:4)  ! downward surface flux 
++ real :: flxd_surf(chunk,1:4)  ! downward surface flux 
+                          ! 1-direct UV+PAR, 2-diffuse UV+PAR, 3-direct NIR, 4-diffuse NIR
+ 
+ ! misc parameter for calculations
+@@ -1522,14 +1522,14 @@
+ 
+ ! parameters for fast skip radiation 
+  integer :: ij_skip
+- integer,dimension(CHUNK) :: ie,je !block array indice
++ integer,dimension(chunk) :: ie,je !block array indice
+ 
+  INTEGER :: ip, ic, ii
+- logical :: no_micro(CHUNK), lmask(CHUNK) ! No update of theta tendancy (rthraten) and energy budget due to solar heating
++ logical :: no_micro(chunk), lmask(chunk) ! No update of theta tendancy (rthraten) and energy budget due to solar heating
+ 
+ ! now in local parameter for OMP purpose
+ 
+- real,dimension( CHUNK,ilev_max,6)    :: mcdat_int  !interpolated Mclatchy Sounding climatology
++ real,dimension( chunk,ilev_max,6)    :: mcdat_int  !interpolated Mclatchy Sounding climatology
+ 
+ !--------------------       PROGRAM START        ---------------------------------------
+ 
+@@ -1673,16 +1673,16 @@
+ #endif
+ !$OMP SCHEDULE(dynamic,1)
+ 
+-  DO ip = 1,((1+(ite-its+1)/CHUNK)*CHUNK)*(jte-jts+1),CHUNK ! *ij_skip
+-  j  = jts+(ip-1)/((1+(ite-its+1)/CHUNK)*CHUNK) ! *ij_skip
++  DO ip = 1,((1+(ite-its+1)/chunk)*chunk)*(jte-jts+1),chunk ! *ij_skip
++  j  = jts+(ip-1)/((1+(ite-its+1)/chunk)*chunk) ! *ij_skip
+   IF ( j .ge. jts .and. j .le. jte ) THEN
+-  ii = its+mod((ip-1),((1+(ite-its+1)/CHUNK)*CHUNK)) ! *ij_skip
++  ii = its+mod((ip-1),((1+(ite-its+1)/chunk)*chunk)) ! *ij_skip
+ 
+ !TEST
+          q1d(:,:,:) = 0.
+ 
+   if( radiation_skip ) then
+-   DO ic=1,min(CHUNK,ite-ii+1) ! /ij_skip
++   DO ic=1,min(chunk,ite-ii+1) ! /ij_skip
+      i = ii+(ic-1) ! *ij_skip
+      ie(ic) =  min(ite,i+ij_skip-1) ! skip block i end bound
+      je(ic) =  min(jte,j+ij_skip-1) ! skip block j end bound
+@@ -1693,12 +1693,12 @@
+ ! Mclatchy sounding climatologies are temporally and spatially interpolated at each grid's latitude and julday.
+ !
+   if( radiation_skip ) then
+-   DO ic=1,min(CHUNK,ite-ii+1)
++   DO ic=1,min(chunk,ite-ii+1)
+      i = ii+ic-1
+      call sounding_interp( ave(xlat(i:ie(ic),j:je(ic))) , julday , mcdat_int(ic,:,:))  
+    ENDDO
+   else
+-   DO ic=1,min(CHUNK,ite-ii+1)
++   DO ic=1,min(chunk,ite-ii+1)
+      i = ii+ic-1
+      call sounding_interp( xlat(i,j) , julday , mcdat_int(ic,:,:) )
+    ENDDO
+@@ -1709,7 +1709,7 @@
+ !
+   if( radiation_skip ) then
+       do kt=kts-1,kte !full level ( kts -1 = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+ !           km=kme-kt+kms-1  
+            km=kte-kt+kts  
+@@ -1720,7 +1720,7 @@
+       enddo
+   else
+       do kt=kts-1,kte !full level ( kts -1 = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+ !           km=kme-kt+kms-1
+            km=kte-kt+kts
+@@ -1732,7 +1732,7 @@
+   endif
+ 
+ ! Now set up TOA pressure is zero, this is required ...
+-  DO ic=1,min(CHUNK,ite-ii+1)
++  DO ic=1,min(chunk,ite-ii+1)
+     p8w1d(ic,kts-1) = 0.
+   ENDDO
+ 
+@@ -1742,7 +1742,7 @@
+   if( radiation_skip ) then
+ 
+      do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic-1
+ !        km=kme-kt+kms-1
+         km=kte-kt+kts
+@@ -1760,7 +1760,7 @@
+   else
+ 
+      do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic-1
+ !        km=kme-kt+kms-1
+         km=kte-kt+kts
+@@ -1780,7 +1780,7 @@
+ !
+ ! vertical profiles for ozone by pressure in half level.
+ !
+-  DO ic=1,min(CHUNK,ite-ii+1)
++  DO ic=1,min(chunk,ite-ii+1)
+     call ozone_interp( mcdat_int(ic,:,:), dk_half, p1d(ic,:), o31d(ic,:) )
+   ENDDO
+ 
+@@ -1790,7 +1790,7 @@
+ 
+     if ( present( f_qi ) .and. present( qi )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1813,7 +1813,7 @@
+ 
+     if ( present( f_qc ) .and. present( qc )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1836,7 +1836,7 @@
+ 
+     if ( present( f_qr ) .and. present( qr )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1863,7 +1863,7 @@
+ 
+     if ( present( f_qs ) .and. present( qs )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1890,7 +1890,7 @@
+ 
+     if ( present( f_qg ) .and. present( qg )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1917,7 +1917,7 @@
+ 
+     if ( present( f_qh ) .and. present( qh )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1950,7 +1950,7 @@
+    p400(:) = 1.e5
+    p700(:) = 1.e5
+    do kt = kts,kte
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+         if (abs(p1d(ic,kt) - 400.) .lt. p400(ic)) then
+             p400(ic) = abs(p1d(ic,kt) - 400.)
+             ict(ic) = kt
+@@ -1976,18 +1976,18 @@
+     ! Derive cloud single-scattering properties
+     ! 
+       call opt_cloud( sw_or_lw, dk_half ,nband_sw, dz1d, q1d, &
+-          re1d, taucl_sw, ssacl_sw, asycl_sw, min(CHUNK,ite-ii+1) )
++          re1d, taucl_sw, ssacl_sw, asycl_sw, min(chunk,ite-ii+1) )
+ 
+     !
+     ! column cloud optical depth for visible (PAR) band
+     ! 
+     if( radiation_skip ) then
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic -1
+       cod2d_out(i:ie(ic),j:je(ic)) = sum(taucl_sw(ic,kts:kte,8)) 
+      ENDDO
+     else
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic -1
+       cod2d_out(i,j) = sum(taucl_sw(ic,kts:kte,8))
+      ENDDO
+@@ -1996,7 +1996,7 @@
+     !
+     ! cloud-top pressure (threshold is optical depth 0.01)
+     !
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+      i = ii+ic -1
+      ctop_loop: do k = kts,kte
+        if( taucl_sw(ic,k,8) >= 0.01 ) then  
+@@ -2013,7 +2013,7 @@
+ !
+ ! compute aerosol sigle-scattering properties.  
+ !
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+      taual_sw(ic,:,:) = 0.
+      ssaal_sw(ic,:,:) = 0.
+      asyal_sw(ic,:,:) = 0.
+@@ -2030,7 +2030,7 @@
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+              do n = 1, num_go
+-               DO ic=1,min(CHUNK,ite-ii+1)
++               DO ic=1,min(chunk,ite-ii+1)
+                  i = ii+ic-1
+                  aero1d(ic,kt,n)=ave(aero(i:ie(ic),km,j:je(ic),n))
+                ENDDO
+@@ -2040,7 +2040,7 @@
+           do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+-             DO ic=1,min(CHUNK,ite-ii+1)
++             DO ic=1,min(chunk,ite-ii+1)
+                i = ii+ic-1
+                aero1d(ic,kt,:)=aero(i,km,j,:)
+              ENDDO
+@@ -2050,7 +2050,7 @@
+         ! Derive aerosol optical properties in 1D manner (must be here to reduce memory size)
+         !
+ 
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           call aero_opt(sw_or_lw, dk_half, nband_sw, p1d(ic,:), t1d(ic,:), sh1d(ic,:), &
+              dz1d(ic,:), aero1d(ic,:,:), taual_sw(ic,:,:), ssaal_sw(ic,:,:), asyal_sw(ic,:,:))
+         ENDDO
+@@ -2059,12 +2059,12 @@
+         ! Output AOD profile at PAR band for diagnostic purpose
+         !
+         if( radiation_skip ) then
+-         DO ic=1,min(CHUNK,ite-ii+1)
++         DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+           aod2d_out(i:ie(ic),j:je(ic))  = sum(taual_sw(ic,:,8))   ! 8 is PAR band (0.400-0.700 micron band)
+          ENDDO
+         else
+-         DO ic=1,min(CHUNK,ite-ii+1)
++         DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+           aod2d_out(i,j)  = sum(taual_sw(ic,:,8))   ! 8 is PAR band (0.400-0.700 micron band)
+          ENDDO
+@@ -2073,7 +2073,7 @@
+         !
+         ! Output aerosol-top pressure (useful for PBL)
+         !
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+          atop_loop: do k = kts,kte
+           if( taual_sw(ic,k,8) >= 0.01 ) then
+@@ -2088,7 +2088,7 @@
+         ENDDO
+ 
+      else
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic-1
+        if( radiation_skip ) then
+          aod2d_out(i:ie(ic),j:je(ic)) = 0.e0
+@@ -2108,7 +2108,7 @@
+ !
+ 
+     if (present(coszen)) then ! jararias, 14/08/2013
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic-1
+ !      call wrf_debug(100,'using coszen from radiation driver')
+       if( radiation_skip ) then
+@@ -2122,7 +2122,7 @@
+       !
+       ! estimate cosin of solar zenith angle
+       !
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic-1
+        if( radiation_skip ) then
+          xt24 = mod(xtime + radfrq * 0.5e0, 1440.e0)
+@@ -2150,7 +2150,7 @@
+ !
+ 
+     no_micro = .false.
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic-1
+       if (cosz(ic) <= cosz_min ) then !night time skip 
+ 
+@@ -2181,7 +2181,7 @@
+       endif
+     ENDDO
+ 
+-    if (ALL(no_micro(1:min(CHUNK,ite-ii+1)))) cycle
++    if (ALL(no_micro(1:min(chunk,ite-ii+1)))) cycle
+     lmask = .true.
+     lmask = lmask .and. (.not. no_micro)
+ 
+@@ -2191,7 +2191,7 @@
+ ! For example Seller's canopy albedo model gives rsuvbm, rsuvdf, rsirbm, rsirdf
+ ! independently. 
+ !
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+     if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+        if( radiation_skip ) then 
+@@ -2210,7 +2210,7 @@
+ !
+ ! drive shortwave (solar) radiative transfer (1D driver)
+ !
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+       if(lmask(ic) .eqv. .true.) then
+         flx(ic,:)=0. ; flxd(ic,:)=0. ; flxu(ic,:)=0.
+       endif
+@@ -2221,13 +2221,13 @@
+                    taucl=dble(taucl_sw), ssacl=dble(ssacl_sw), asycl=dble(asycl_sw), &
+                    taual=dble(taual_sw), ssaal=dble(ssaal_sw), asyal=dble(asyal_sw), &
+                    cosz=dble(cosz), rsuvbm=dble(rsuvbm), rsuvdf=dble(rsuvdf), rsirbm=dble(rsirbm), rsirdf=dble(rsirdf),&
+-                   flx_out=flx, flxd_out=flxd,flxu_out=flxu, flxd_surf = flxd_surf, lmask=lmask, irestrict=min(CHUNK,ite-ii+1) )
++                   flx_out=flx, flxd_out=flxd,flxu_out=flxu, flxd_surf = flxd_surf, lmask=lmask, irestrict=min(chunk,ite-ii+1) )
+ 
+ !
+ ! convert the units of flx from flux fraction to W/m2 (full level)
+ !
+       do kt=kts-1,kte !full level ( kts -1 = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+         if(lmask(ic) .eqv. .true.) then
+          flx(ic,kt) = flx(ic,kt) * solcon * cosz(ic)
+         endif
+@@ -2240,7 +2240,7 @@
+       fac = .01 * g / cp
+ 
+       do kt=kts,kte !half level ( kts = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+         if(lmask(ic) .eqv. .true.) then
+          i = ii+ic -1
+          tten1d(ic,kt) = - fac * (flx(ic,kt-1) - flx(ic,kt)) / (p8w1d(ic,kt-1)-p8w1d(ic,kt))
+@@ -2268,7 +2268,7 @@
+ ! Update theta tendency due to radiative heating (K/sec)
+ !
+       do kt=kts,kte  !half level
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+        if(lmask(ic) .eqv. .true.) then
+         i = ii+ic -1
+ !         km=kme-kt+kms-1
+@@ -2296,7 +2296,7 @@
+ !
+ ! absorbed part in surface energy budget [W/m^2] (Note that flxd in SW is flux fraction)
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+      if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+        gsf(i:ie(ic),j:je(ic)) = (1. - rsuvbm(ic)) * flxd(ic,kte) * solcon * cosz(ic)
+@@ -2307,7 +2307,7 @@
+ ! More detailed surface flux for Seller's canoppy radiative transfer 
+ !
+      do n = 1, 4
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+        if(lmask(ic) .eqv. .true.) then
+          i = ii+ic-1
+          if(present(sflxd)) sflxd(i:ie(ic),j:je(ic),n) = flxd_surf(ic,n) * solcon * cosz(ic)  !surface dir/dif PAR/NIR downward radiation [W/m2]
+@@ -2317,7 +2317,7 @@
+ !
+ ! Extra output for NCAR WRF V3.5.1 (modified)
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+      if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+        if(present(swddni)) swddni(i:ie(ic),j:je(ic)) = (flxd_surf(ic,1)+flxd_surf(ic,3)) * solcon !total SW direct radiation at normal direction [W/m2]
+@@ -2339,7 +2339,7 @@
+ !
+ ! absorbed part in surface energy budget [W/m^2] (Note that flxd in SW is flux fraction)
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+      if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+ 
+@@ -2380,7 +2380,7 @@
+ ! compute condensate single-scattering properties. 
+ !
+       call opt_cloud( sw_or_lw, dk_half ,nband_lw, dz1d, q1d, & 
+-       re1d, taucl_lw, ssacl_lw, asycl_lw, min(CHUNK,ite-ii+1) )
++       re1d, taucl_lw, ssacl_lw, asycl_lw, min(chunk,ite-ii+1) )
+ 
+ !
+ ! initialize aerosol LW optical properties 
+@@ -2400,7 +2400,7 @@
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+              do n = 1, num_go
+-               DO ic=1,min(CHUNK,ite-ii+1)
++               DO ic=1,min(chunk,ite-ii+1)
+                  i = ii+ic-1
+                  aero1d(ic,kt,n)=ave(aero(i:ie(ic),km,j:je(ic),n))
+                ENDDO
+@@ -2410,7 +2410,7 @@
+           do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+-             DO ic=1,min(CHUNK,ite-ii+1)
++             DO ic=1,min(chunk,ite-ii+1)
+                i = ii+ic-1
+                aero1d(ic,kt,:)=aero(i,km,j,:)
+              ENDDO
+@@ -2420,7 +2420,7 @@
+         !
+         ! Derive aerosol LW optical properties in 1D manner (must be here to reduce memory size)
+         !
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           call aero_opt(sw_or_lw, dk_half, nband_lw, p1d(ic,:), t1d(ic,:), sh1d(ic,:), &
+              dz1d(ic,:), aero1d(ic,:,:), taual_lw(ic,:,:), ssaal_lw(ic,:,:), asyal_lw(ic,:,:))
+         ENDDO
+@@ -2429,7 +2429,7 @@
+         do kt=kts,kte   ! half level (kts = TOA, kte = BOA)    
+ !           km=kme-kt+kms-1
+            km=kte-kt+kts
+-           DO ic=1,min(CHUNK,ite-ii+1)
++           DO ic=1,min(chunk,ite-ii+1)
+              aero1d(ic,kt,:)=0
+            ENDDO
+         enddo
+@@ -2440,7 +2440,7 @@
+ !
+ ! surface parameters
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic -1
+        tsfc(ic)  = t8w1d(ic,kte)   !surface-layer air temperature [K]
+        if( radiation_skip ) then
+@@ -2460,7 +2460,7 @@
+                     emiss=dble(emis1d), fcld=dble(fcld1d), &
+                     taucl=dble(taucl_lw), ssacl=dble(ssacl_lw), asycl=dble(asycl_lw),  &
+                     taual=dble(taual_lw), ssaal=dble(ssaal_lw), asyal=dble(asyal_lw),  &
+-                    flx_out=flx, acflxd_out=flxd, acflxu_out=flxu, irestrict=min(CHUNK,ite-ii+1) )
++                    flx_out=flx, acflxd_out=flxd, acflxu_out=flxu, irestrict=min(chunk,ite-ii+1) )
+ 
+ !
+ ! calculate heating rate (deg/sec)
+@@ -2468,7 +2468,7 @@
+      fac = .01 * g / cp
+ 
+      do kt=kts,kte !half level ( kts = TOA, kte = BOA )
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic -1
+         tten1d(ic,kt) = - fac * (flx(ic,kt-1) - flx(ic,kt)) / (p8w1d(ic,kt-1)-p8w1d(ic,kt))
+ 
+@@ -2495,7 +2495,7 @@
+ ! get theta tendency due to radiative heating (K/sec)
+ !
+      do kt=kts,kte  !half level
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic -1
+ !        km=kme-kt+kms-1
+         km=kte-kt+kts
+@@ -2513,7 +2513,7 @@
+ !
+ ! downwelling/upwelling longwave radiation [W/m^2] (Note that flxd/flxu of LW is actual flux [W/m2])
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic -1
+        gsf(i:ie(ic),j:je(ic)) = flxd(ic,kte)  !surface downwelling LW radiation
+ 
+@@ -2530,7 +2530,7 @@
+ !
+ ! downwelling/upwelling longwave radiation [W/m^2] (Note that flxd/flxu of LW is actual flux [W/m2])
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic -1
+        gsf(i,j) = flxd(ic,kte)  !surface downwelling LW radiation
+ 
+@@ -3373,47 +3373,47 @@
+  implicit none
+ !-----IO parameters
+  integer,intent(in) :: irestrict
+- logical,dimension(CHUNK),intent(in) :: lmask
++ logical,dimension(chunk),intent(in) :: lmask
+  integer,intent(in) :: np  ! # of vertical layer
+- integer,dimension(CHUNK),intent(in) :: ict,icb !vertical index to separate high- middle- and low-clouds
+- real(fp_kind),intent(in) :: pl(CHUNK,1:np+1)
+- real(fp_kind),dimension(CHUNK,np),intent(in) :: ta,wa,oa,fcld
+- real(fp_kind),dimension(CHUNK,np,nband_sw),intent(in) :: taucl,ssacl,asycl  ! condensate optical properties 
+- real(fp_kind),dimension(CHUNK,np,nband_sw),intent(in) :: taual,ssaal,asyal  ! aerosol optical properties 
+- real(fp_kind),dimension(CHUNK),intent(in) :: cosz                        ! cosine of solar zenith angle
+- real(fp_kind),dimension(CHUNK),intent(in) :: rsuvbm,rsuvdf,rsirbm,rsirdf ! vis/nir albedo for beam and iffuse radiaiton
+-
+- real,intent(out) :: flx_out(CHUNK,1:np+1)    !flux divergence (down-up) []
+- real,intent(out) :: flxd_out(CHUNK,1:np+1)   !downward flux fraction []
+- real,intent(out) :: flxu_out(CHUNK,1:np+1)   !upwelling flux fraction []
+- real,intent(out) :: flxd_surf(CHUNK,4)     !1-direct UV+PAR, 2-diffuse UV+PAR, 3-direct NIR, 4-diffuse NIR
++ integer,dimension(chunk),intent(in) :: ict,icb !vertical index to separate high- middle- and low-clouds
++ real(fp_kind),intent(in) :: pl(chunk,1:np+1)
++ real(fp_kind),dimension(chunk,np),intent(in) :: ta,wa,oa,fcld
++ real(fp_kind),dimension(chunk,np,nband_sw),intent(in) :: taucl,ssacl,asycl  ! condensate optical properties 
++ real(fp_kind),dimension(chunk,np,nband_sw),intent(in) :: taual,ssaal,asyal  ! aerosol optical properties 
++ real(fp_kind),dimension(chunk),intent(in) :: cosz                        ! cosine of solar zenith angle
++ real(fp_kind),dimension(chunk),intent(in) :: rsuvbm,rsuvdf,rsirbm,rsirdf ! vis/nir albedo for beam and iffuse radiaiton
++
++ real,intent(out) :: flx_out(chunk,1:np+1)    !flux divergence (down-up) []
++ real,intent(out) :: flxd_out(chunk,1:np+1)   !downward flux fraction []
++ real,intent(out) :: flxu_out(chunk,1:np+1)   !upwelling flux fraction []
++ real,intent(out) :: flxd_surf(chunk,4)     !1-direct UV+PAR, 2-diffuse UV+PAR, 3-direct NIR, 4-diffuse NIR
+ 
+ !-----IO parameter used to be-----
+- real(fp_kind) :: flc(CHUNK,1:np+1)
+- real(fp_kind) :: flx(CHUNK,1:np+1)    !flux divergence (down-up) []
+- real(fp_kind) :: flxd(CHUNK,1:np+1)   !downward flux fraction []
+- real(fp_kind) :: flxu(CHUNK,1:np+1)   !upwelling flux fraction []
+- real(fp_kind) :: fdiruv(CHUNK) ,fdifuv(CHUNK)  !UV 
+- real(fp_kind) :: fdirpar(CHUNK),fdifpar(CHUNK) !PAR
+- real(fp_kind) :: fdirir(CHUNK) ,fdifir(CHUNK)  !NIR
++ real(fp_kind) :: flc(chunk,1:np+1)
++ real(fp_kind) :: flx(chunk,1:np+1)    !flux divergence (down-up) []
++ real(fp_kind) :: flxd(chunk,1:np+1)   !downward flux fraction []
++ real(fp_kind) :: flxu(chunk,1:np+1)   !upwelling flux fraction []
++ real(fp_kind) :: fdiruv(chunk) ,fdifuv(chunk)  !UV 
++ real(fp_kind) :: fdirpar(chunk),fdifpar(chunk) !PAR
++ real(fp_kind) :: fdirir(chunk) ,fdifir(chunk)  !NIR
+ !-----temporary array
+- integer i,j,k,ntop(CHUNK),ic
+- integer :: nctop(CHUNK)
++ integer i,j,k,ntop(chunk),ic
++ integer :: nctop(chunk)
+  real(fp_kind) x
+- real(fp_kind) :: taux(CHUNK,np)     ! total condensates optical depth
+- real(fp_kind) :: dp(CHUNK,np)
+- real(fp_kind) :: wh(CHUNK,np)
+- real(fp_kind) :: oh(CHUNK,np)
+- real(fp_kind) :: scal(CHUNK,np)
+- real(fp_kind) :: swu(CHUNK,np+1)
+- real(fp_kind) :: swh(CHUNK,np+1)
+- real(fp_kind) :: so2(CHUNK,np+1)    !scaled o2 conc
+- real(fp_kind) :: df(CHUNK,np+1)     !integrated flux refuction rate []
+- real(fp_kind) :: df_sub(CHUNK,np+1) !sub-layer flux reduction rate []
+- real(fp_kind) :: df_cld(CHUNK,np+1) !integrated clear-sky flux reduction rate []
+- real(fp_kind) :: df_clr(CHUNK,np+1) !integrated all-sky flux reduction rate []
+- real(fp_kind) :: snt(CHUNK)         !inverse of cosz
+- real(fp_kind) :: cnt(CHUNK)
++ real(fp_kind) :: taux(chunk,np)     ! total condensates optical depth
++ real(fp_kind) :: dp(chunk,np)
++ real(fp_kind) :: wh(chunk,np)
++ real(fp_kind) :: oh(chunk,np)
++ real(fp_kind) :: scal(chunk,np)
++ real(fp_kind) :: swu(chunk,np+1)
++ real(fp_kind) :: swh(chunk,np+1)
++ real(fp_kind) :: so2(chunk,np+1)    !scaled o2 conc
++ real(fp_kind) :: df(chunk,np+1)     !integrated flux refuction rate []
++ real(fp_kind) :: df_sub(chunk,np+1) !sub-layer flux reduction rate []
++ real(fp_kind) :: df_cld(chunk,np+1) !integrated clear-sky flux reduction rate []
++ real(fp_kind) :: df_clr(chunk,np+1) !integrated all-sky flux reduction rate []
++ real(fp_kind) :: snt(chunk)         !inverse of cosz
++ real(fp_kind) :: cnt(chunk)
+ 
+ ! new look-up table for (Fclr/Fall) ratio (overcast_fast option)
+   real(fp_kind) :: ratio, cld_alb
+@@ -5624,19 +5624,19 @@
+ !***********************************************************************
+ !-----input parameters
+  integer,intent(in) :: irestrict
+- logical,dimension(CHUNK),intent(in) :: lmask
+- integer np,ict(CHUNK),icb(CHUNK)
+- real(fp_kind) fcld(CHUNK,np)
+- real(fp_kind) wh(CHUNK,np),oh(CHUNK,np),dp(CHUNK,np)
+- real(fp_kind) taucl(CHUNK,np,nband_sw),ssacl(CHUNK,np,nband_sw),asycl(CHUNK,np,nband_sw)
+- real(fp_kind) taual(CHUNK,np,nband_sw),ssaal(CHUNK,np,nband_sw),asyal(CHUNK,np,nband_sw)
+- real(fp_kind) rsuvbm(CHUNK),rsuvdf(CHUNK),cosz(CHUNK)
++ logical,dimension(chunk),intent(in) :: lmask
++ integer np,ict(chunk),icb(chunk)
++ real(fp_kind) fcld(chunk,np)
++ real(fp_kind) wh(chunk,np),oh(chunk,np),dp(chunk,np)
++ real(fp_kind) taucl(chunk,np,nband_sw),ssacl(chunk,np,nband_sw),asycl(chunk,np,nband_sw)
++ real(fp_kind) taual(chunk,np,nband_sw),ssaal(chunk,np,nband_sw),asyal(chunk,np,nband_sw)
++ real(fp_kind) rsuvbm(chunk),rsuvdf(chunk),cosz(chunk)
+ !-----output (updated) parameter
+- real(fp_kind) flx(CHUNK,np+1),flc(CHUNK,np+1)
+- real(fp_kind) flxd(CHUNK,np+1)
+- real(fp_kind) fdiruv(CHUNK) ,fdifuv(CHUNK)
+- real(fp_kind) fdirpar(CHUNK),fdifpar(CHUNK)
+- real(fp_kind) taux(CHUNK,np)
++ real(fp_kind) flx(chunk,np+1),flc(chunk,np+1)
++ real(fp_kind) flxd(chunk,np+1)
++ real(fp_kind) fdiruv(chunk) ,fdifuv(chunk)
++ real(fp_kind) fdirpar(chunk),fdifpar(chunk)
++ real(fp_kind) taux(chunk,np)
+ 
+ !-----static parameters
+  integer nband
+@@ -5647,41 +5647,41 @@
+ !-----temporary array
+  integer :: k,ib,ic
+  integer ::  ih1,ih2,im1,im2,is1,is2
+- real(fp_kind) :: taurs(CHUNK,np),tauoz(CHUNK,np),tauwv(CHUNK,np) ! TODO: scalarize
++ real(fp_kind) :: taurs(chunk,np),tauoz(chunk,np),tauwv(chunk,np) ! TODO: scalarize
+ ! real(fp_kind) :: g(max_spc) !asymetry factors
+  real(fp_kind) :: dsm
+- real(fp_kind) :: tauclb(CHUNK,np,nband_sw)
+- real(fp_kind) :: tauclf(CHUNK,np,nband_sw)
+- real(fp_kind) :: tausto(CHUNK)
+- real(fp_kind) :: ssatau(CHUNK)
+- real(fp_kind) :: asysto(CHUNK)
+- real(fp_kind) :: tautob(CHUNK)
+- real(fp_kind) :: ssatob(CHUNK)
+- real(fp_kind) :: asytob(CHUNK)
+- real(fp_kind) :: tautof(CHUNK)
+- real(fp_kind) :: ssatof(CHUNK)
+- real(fp_kind) :: asytof(CHUNK)
+- real(fp_kind) :: rr(CHUNK,np+1,2)
+- real(fp_kind) :: tt(CHUNK,np+1,2)
+- real(fp_kind) :: td(CHUNK,np+1,2)
+- real(fp_kind) :: rs(CHUNK,np+1,2)
+- real(fp_kind) :: ts(CHUNK,np+1,2)
+- real(fp_kind) :: fall(CHUNK,np+1)
+- real(fp_kind) :: falld(CHUNK,np+1)
+- real(fp_kind) :: fclr(CHUNK,np+1)
+- real(fp_kind) :: fsdir(CHUNK)
+- real(fp_kind) :: fsdif(CHUNK)
+- real(fp_kind) :: asyclt(CHUNK)
+- real(fp_kind) :: cc(CHUNK,3)
+- real(fp_kind) :: rrt(CHUNK,np)
+- real(fp_kind) :: ttt(CHUNK,np)
+- real(fp_kind) :: tdt(CHUNK,np)
+- real(fp_kind) :: rst(CHUNK,np)
+- real(fp_kind) :: tst(CHUNK,np)
+- real(fp_kind) :: dum1(CHUNK,np+1)
+- real(fp_kind) :: dum2(CHUNK)
+- real(fp_kind) :: dum3(CHUNK)
+- real(fp_kind) :: dum(CHUNK,np)
++ real(fp_kind) :: tauclb(chunk,np,nband_sw)
++ real(fp_kind) :: tauclf(chunk,np,nband_sw)
++ real(fp_kind) :: tausto(chunk)
++ real(fp_kind) :: ssatau(chunk)
++ real(fp_kind) :: asysto(chunk)
++ real(fp_kind) :: tautob(chunk)
++ real(fp_kind) :: ssatob(chunk)
++ real(fp_kind) :: asytob(chunk)
++ real(fp_kind) :: tautof(chunk)
++ real(fp_kind) :: ssatof(chunk)
++ real(fp_kind) :: asytof(chunk)
++ real(fp_kind) :: rr(chunk,np+1,2)
++ real(fp_kind) :: tt(chunk,np+1,2)
++ real(fp_kind) :: td(chunk,np+1,2)
++ real(fp_kind) :: rs(chunk,np+1,2)
++ real(fp_kind) :: ts(chunk,np+1,2)
++ real(fp_kind) :: fall(chunk,np+1)
++ real(fp_kind) :: falld(chunk,np+1)
++ real(fp_kind) :: fclr(chunk,np+1)
++ real(fp_kind) :: fsdir(chunk)
++ real(fp_kind) :: fsdif(chunk)
++ real(fp_kind) :: asyclt(chunk)
++ real(fp_kind) :: cc(chunk,3)
++ real(fp_kind) :: rrt(chunk,np)
++ real(fp_kind) :: ttt(chunk,np)
++ real(fp_kind) :: tdt(chunk,np)
++ real(fp_kind) :: rst(chunk,np)
++ real(fp_kind) :: tst(chunk,np)
++ real(fp_kind) :: dum1(chunk,np+1)
++ real(fp_kind) :: dum2(chunk)
++ real(fp_kind) :: dum3(chunk)
++ real(fp_kind) :: dum(chunk,np)
+ !-----hk is the fractional extra-terrestrial solar flux in each
+ !     of the 8 bands. the sum of hk is 0.47074. (table 3)
+       data hk/.00057, .00367, .00083, .00417, &
+@@ -6050,19 +6050,19 @@
+ !
+ !**********************************************************************
+ !-----input parameters
+- logical lmask(CHUNK)
++ logical lmask(chunk)
+  integer irestrict
+- integer np,ict(CHUNK),icb(CHUNK)
++ integer np,ict(chunk),icb(chunk)
+  integer ih1,ih2,im1,im2,is1,is2
+- real(fp_kind) fcld(CHUNK,np),cosz(CHUNK)
+- real(fp_kind) rsirbm(CHUNK),rsirdf(CHUNK)
+- real(fp_kind) taucl(CHUNK,np,nband_sw),ssacl(CHUNK,np,nband_sw),asycl(CHUNK,np,nband_sw)
+- real(fp_kind) taual(CHUNK,np,nband_sw),ssaal(CHUNK,np,nband_sw),asyal(CHUNK,np,nband_sw)
+- real(fp_kind) dp(CHUNK,np),wh(CHUNK,np)
++ real(fp_kind) fcld(chunk,np),cosz(chunk)
++ real(fp_kind) rsirbm(chunk),rsirdf(chunk)
++ real(fp_kind) taucl(chunk,np,nband_sw),ssacl(chunk,np,nband_sw),asycl(chunk,np,nband_sw)
++ real(fp_kind) taual(chunk,np,nband_sw),ssaal(chunk,np,nband_sw),asyal(chunk,np,nband_sw)
++ real(fp_kind) dp(chunk,np),wh(chunk,np)
+ !-----output (updated) parameters
+- real(fp_kind) flx(CHUNK,np+1),flc(CHUNK,np+1)
+- real(fp_kind) flxd(CHUNK,np+1)
+- real(fp_kind) fdirir(CHUNK),fdifir(CHUNK)
++ real(fp_kind) flx(chunk,np+1),flc(chunk,np+1)
++ real(fp_kind) flxd(chunk,np+1)
++ real(fp_kind) fdirir(chunk),fdifir(chunk)
+ !-----static parameters
+  integer nk,nband
+  parameter (nk=10,nband=3)
+@@ -6077,39 +6077,39 @@
+  integer ib,iv,ik,k,ic
+  real(fp_kind) taurs,tauwv
+  real(fp_kind) :: dsm
+- real(fp_kind) :: tauclb(CHUNK,np)
+- real(fp_kind) :: tauclf(CHUNK,np)
+- real(fp_kind) :: cc(CHUNK,3)
+- real(fp_kind) :: rr(CHUNK,np+1,2)
+- real(fp_kind) :: tt(CHUNK,np+1,2)
+- real(fp_kind) :: td(CHUNK,np+1,2)
+- real(fp_kind) :: rs(CHUNK,np+1,2)
+- real(fp_kind) :: ts(CHUNK,np+1,2)
+- real(fp_kind) :: fall(CHUNK,np+1)
+- real(fp_kind) :: falld(CHUNK,np+1)
+- real(fp_kind) :: fclr(CHUNK,np+1)
+- real(fp_kind) :: fsdir(CHUNK)
+- real(fp_kind) :: fsdif(CHUNK)
+- real(fp_kind) :: tausto(CHUNK,np)
+- real(fp_kind) :: ssatau(CHUNK,np)
+- real(fp_kind) :: asysto(CHUNK,np)
+- real(fp_kind) :: tautob(CHUNK,np)
+- real(fp_kind) :: ssatob(CHUNK,np)
+- real(fp_kind) :: asytob(CHUNK,np)
+- real(fp_kind) :: tautof(CHUNK,np)
+- real(fp_kind) :: ssatof(CHUNK,np)
+- real(fp_kind) :: asytof(CHUNK,np)
+-! real(fp_kind) :: ssaclt(CHUNK)
+-! real(fp_kind) :: asyclt(CHUNK)
+- real(fp_kind) :: rrt(CHUNK,np)
+- real(fp_kind) :: ttt(CHUNK,np)
+- real(fp_kind) :: tdt(CHUNK,np)
+- real(fp_kind) :: rst(CHUNK,np)
+- real(fp_kind) :: tst(CHUNK,np)
+- real(fp_kind) :: dum1(CHUNK,np+1)
+- real(fp_kind) :: dum2(CHUNK)
+- real(fp_kind) :: dum3(CHUNK)
+- real(fp_kind) :: dum(CHUNK,np)
++ real(fp_kind) :: tauclb(chunk,np)
++ real(fp_kind) :: tauclf(chunk,np)
++ real(fp_kind) :: cc(chunk,3)
++ real(fp_kind) :: rr(chunk,np+1,2)
++ real(fp_kind) :: tt(chunk,np+1,2)
++ real(fp_kind) :: td(chunk,np+1,2)
++ real(fp_kind) :: rs(chunk,np+1,2)
++ real(fp_kind) :: ts(chunk,np+1,2)
++ real(fp_kind) :: fall(chunk,np+1)
++ real(fp_kind) :: falld(chunk,np+1)
++ real(fp_kind) :: fclr(chunk,np+1)
++ real(fp_kind) :: fsdir(chunk)
++ real(fp_kind) :: fsdif(chunk)
++ real(fp_kind) :: tausto(chunk,np)
++ real(fp_kind) :: ssatau(chunk,np)
++ real(fp_kind) :: asysto(chunk,np)
++ real(fp_kind) :: tautob(chunk,np)
++ real(fp_kind) :: ssatob(chunk,np)
++ real(fp_kind) :: asytob(chunk,np)
++ real(fp_kind) :: tautof(chunk,np)
++ real(fp_kind) :: ssatof(chunk,np)
++ real(fp_kind) :: asytof(chunk,np)
++! real(fp_kind) :: ssaclt(chunk)
++! real(fp_kind) :: asyclt(chunk)
++ real(fp_kind) :: rrt(chunk,np)
++ real(fp_kind) :: ttt(chunk,np)
++ real(fp_kind) :: tdt(chunk,np)
++ real(fp_kind) :: rst(chunk,np)
++ real(fp_kind) :: tst(chunk,np)
++ real(fp_kind) :: dum1(chunk,np+1)
++ real(fp_kind) :: dum2(chunk)
++ real(fp_kind) :: dum3(chunk)
++ real(fp_kind) :: dum(chunk,np)
+ !-----water vapor absorption coefficient for 10 k-intervals.
+ !     unit: cm^2/gm (table 2)
+       data xk/ &
+@@ -6230,7 +6230,7 @@
+ !     and asymmetry factor. eqs.(6.2)-(6.4)
+       VERTICAL_LOOP: do k=1,np
+ !   DO ic=1,irestrict
+-   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+            taurs=ry(ib)*dp(ic,k) 
+@@ -6245,7 +6245,7 @@
+ 
+            IF_CLEAR: if (overcast .and. fast_overcast ) then
+ 
+-   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+              rr(ic,k,1)=0.e0
+@@ -6259,7 +6259,7 @@
+ 
+            else
+ 
+-   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+ !-----compute reflectance and transmittance of the clear portion of a layer
+@@ -6289,7 +6289,7 @@
+ 
+    endif
+    enddo
+-   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+              rr(ic,k,1)=rrt(ic,k)
+@@ -6303,7 +6303,7 @@
+ 
+            endif IF_CLEAR
+ 
+-   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+ !-----compute reflectance and transmittance of the cloudy portion of a layer
+@@ -6347,7 +6347,7 @@
+ 
+    endif
+    enddo
+-   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+           rr(ic,k,2)=rrt(ic,k)
+@@ -6460,12 +6460,12 @@
+ !********************************************************************
+       implicit none
+ !-----input parameters
+-      logical lmask(CHUNK)
++      logical lmask(chunk)
+       integer irestrict
+-      integer np,ict(CHUNK),icb(CHUNK)
+-      real(fp_kind) cosz(CHUNK),fcld(CHUNK,np),taucld(CHUNK,np)
++      integer np,ict(chunk),icb(chunk)
++      real(fp_kind) cosz(chunk),fcld(chunk,np),taucld(chunk,np)
+ !-----output parameters
+-      real(fp_kind) cc(CHUNK,3),tauclb(CHUNK,np),tauclf(CHUNK,np)
++      real(fp_kind) cc(chunk,3),tauclb(chunk,np),tauclf(chunk,np)
+ !-----temporary variables
+       integer i,j,k,im,it,ia,kk,ic
+       real(fp_kind)  fm,ft,fa,xai,taux
+@@ -6878,33 +6878,33 @@
+ !ccshie 8/19/04
+      implicit none
+ !-----input parameters
+-      logical lmask(CHUNK)
++      logical lmask(chunk)
+       integer irestrict
+-      integer np,ict(CHUNK),icb(CHUNK),ih1,ih2,im1,im2,is1,is2
+-      real(fp_kind) rr(CHUNK,np+1,2),tt(CHUNK,np+1,2),td(CHUNK,np+1,2)
+-      real(fp_kind) rs(CHUNK,np+1,2),ts(CHUNK,np+1,2)
+-      real(fp_kind) cc(CHUNK,3)
++      integer np,ict(chunk),icb(chunk),ih1,ih2,im1,im2,is1,is2
++      real(fp_kind) rr(chunk,np+1,2),tt(chunk,np+1,2),td(chunk,np+1,2)
++      real(fp_kind) rs(chunk,np+1,2),ts(chunk,np+1,2)
++      real(fp_kind) cc(chunk,3)
+ !-----temporary array
+       integer k,ih,im,is
+       real(fp_kind) denm,xx,yy
+       real(fp_kind) fupdif
+-      real(fp_kind) :: rra(CHUNK,np+1,2,2)
+-      real(fp_kind) :: tta(CHUNK,np+1,2,2)
+-      real(fp_kind) :: tda(CHUNK,np+1,2,2)
+-      real(fp_kind) :: rsa(CHUNK,np+1,2,2)
+-      real(fp_kind) :: rxa(CHUNK,np+1,2,2)
+-      real(fp_kind) :: ch(CHUNK)
+-      real(fp_kind) :: cm(CHUNK)
+-      real(fp_kind) :: ct(CHUNK)
+-      real(fp_kind) :: flxdn(CHUNK,np+1)
+-      real(fp_kind) :: fdndir(CHUNK)
+-      real(fp_kind) :: fdndif(CHUNK)
+-      real(fp_kind) flxdnu(CHUNK,np+1),flxdnd(CHUNK,np+1)
++      real(fp_kind) :: rra(chunk,np+1,2,2)
++      real(fp_kind) :: tta(chunk,np+1,2,2)
++      real(fp_kind) :: tda(chunk,np+1,2,2)
++      real(fp_kind) :: rsa(chunk,np+1,2,2)
++      real(fp_kind) :: rxa(chunk,np+1,2,2)
++      real(fp_kind) :: ch(chunk)
++      real(fp_kind) :: cm(chunk)
++      real(fp_kind) :: ct(chunk)
++      real(fp_kind) :: flxdn(chunk,np+1)
++      real(fp_kind) :: fdndir(chunk)
++      real(fp_kind) :: fdndif(chunk)
++      real(fp_kind) flxdnu(chunk,np+1),flxdnd(chunk,np+1)
+ 
+ !-----output parameters
+-      real(fp_kind) fclr(CHUNK,np+1),fall(CHUNK,np+1)
+-      real(fp_kind) falld(CHUNK,np+1)
+-      real(fp_kind) fsdir(CHUNK),fsdif(CHUNK)
++      real(fp_kind) fclr(chunk,np+1),fall(chunk,np+1)
++      real(fp_kind) falld(chunk,np+1)
++      real(fp_kind) fsdir(chunk),fsdif(chunk)
+ 
+       integer :: ic
+ 
+@@ -7195,13 +7195,13 @@
+ !     due to co2 absorption.
+       implicit none
+ !-----input parameters
+-      logical lmask(CHUNK)
++      logical lmask(chunk)
+       integer irestrict
+       integer np,nu,nw
+       real(fp_kind) u1,du,w1,dw
+-      real(fp_kind) swc(CHUNK,np+1),swh(CHUNK,np+1),tbl(nu,nw)
++      real(fp_kind) swc(chunk,np+1),swh(chunk,np+1),tbl(nu,nw)
+ !-----output (undated) parameter
+-      real(fp_kind) df(CHUNK,np+1)
++      real(fp_kind) df(chunk,np+1)
+ !-----temporary array
+       integer k,ic,iw,i
+       real(fp_kind) clog,wlog,dc,dd,x0,x1,x2,y0,y1,y2
+@@ -7212,7 +7212,7 @@
+          y1=w1-0.5*dw
+ 
+       do k= 2, np+1
+-      DO i=1,min(CHUNK,irestrict)
++      DO i=1,min(chunk,irestrict)
+       if(lmask(i) .eqv. .true.) then
+           clog=min(swc(i,k),x0)
+           clog=max(swc(i,k),x1)
+@@ -7365,22 +7365,22 @@
+ !
+ !***************************************************************************
+ !---- input parameters ------
+- integer ,intent(in) ::  np,ict(CHUNK),icb(CHUNK)
+- real(fp_kind) ,intent(in) :: pl(CHUNK, np+1),ta(CHUNK, np),wa(CHUNK, np),oa(CHUNK, np), &
+-                     tb(CHUNK), ts(CHUNK), emiss(CHUNK, nband_lw)
+- real(fp_kind) ,intent(in)  :: fcld(CHUNK, np)
+- real(fp_kind) , intent(in) :: taucl(CHUNK, np,nband_lw),ssacl(CHUNK, np,nband_lw),asycl(CHUNK, np,nband_lw)
+- real(fp_kind) , intent(in) :: taual(CHUNK, np,nband_lw),ssaal(CHUNK, np,nband_lw),asyal(CHUNK, np,nband_lw)
++ integer ,intent(in) ::  np,ict(chunk),icb(chunk)
++ real(fp_kind) ,intent(in) :: pl(chunk, np+1),ta(chunk, np),wa(chunk, np),oa(chunk, np), &
++                     tb(chunk), ts(chunk), emiss(chunk, nband_lw)
++ real(fp_kind) ,intent(in)  :: fcld(chunk, np)
++ real(fp_kind) , intent(in) :: taucl(chunk, np,nband_lw),ssacl(chunk, np,nband_lw),asycl(chunk, np,nband_lw)
++ real(fp_kind) , intent(in) :: taual(chunk, np,nband_lw),ssaal(chunk, np,nband_lw),asyal(chunk, np,nband_lw)
+  integer :: irestrict
+ !---- output parameters ------
+- real,intent(out) :: flx_out(CHUNK, np+1)
+- real,intent(out) :: acflxu_out(CHUNK, np+1)
+- real,intent(out) :: acflxd_out(CHUNK, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
++ real,intent(out) :: flx_out(chunk, np+1)
++ real,intent(out) :: acflxu_out(chunk, np+1)
++ real,intent(out) :: acflxd_out(chunk, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
+ 
+- real(fp_kind) :: flx(CHUNK, np+1)
+- real(fp_kind) :: acflxu(CHUNK, np+1),acflxd(CHUNK, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
++ real(fp_kind) :: flx(chunk, np+1)
++ real(fp_kind) :: acflxu(chunk, np+1),acflxd(chunk, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
+ 
+- real(fp_kind) :: flc(CHUNK, np+1),dfdts(CHUNK, np+1), sfcem(CHUNK)
++ real(fp_kind) :: flc(chunk, np+1),dfdts(chunk, np+1), sfcem(chunk)
+ 
+ !---- static data -----
+  real(fp_kind) :: cb(6,10),xkw(9),xke(9),aw(9),bw(9),pm(9),fkw(6,9),gkw(6,3)
+@@ -7402,30 +7402,30 @@
+  real(fp_kind) :: h71(nx2,nh),h72(nx2,nh),h73(nx2,nh)
+  real(fp_kind) :: h81(nx2,nh),h82(nx2,nh),h83(nx2,nh)
+ !---- temporary arrays -----
+- real(fp_kind) :: pa(CHUNK, np),dt(CHUNK, np)
+- real(fp_kind) :: sh2o(CHUNK, np+1),swpre(CHUNK, np+1),swtem(CHUNK, np+1)
+- real(fp_kind) :: sco3(CHUNK, np+1),scopre(CHUNK, np+1),scotem(CHUNK, np+1)
+- real(fp_kind) :: dh2o(CHUNK, np),dcont(CHUNK, np),dco2(CHUNK, np),do3(CHUNK, np)
+- real(fp_kind) :: dn2o(CHUNK, np),dch4(CHUNK, np)
+- real(fp_kind) :: df11(CHUNK, np),df12(CHUNK, np),df22(CHUNK, np)
+- real(fp_kind) :: th2o(CHUNK, 6),tcon(CHUNK, 3),tco2(CHUNK, 6,2)
+- real(fp_kind) :: tn2o(CHUNK, 4),tch4(CHUNK, 4),tcom(CHUNK, 6)
+- real(fp_kind) :: tf11(CHUNK),tf12(CHUNK),tf22(CHUNK)
+- real(fp_kind) :: h2oexp(CHUNK, np,6),conexp(CHUNK, np,3),co2exp(CHUNK, np,6,2)
+- real(fp_kind) :: n2oexp(CHUNK, np,4),ch4exp(CHUNK, np,4),comexp(CHUNK, np,6)
+- real(fp_kind) :: f11exp(CHUNK, np),f12exp(CHUNK, np),f22exp(CHUNK, np)
+- real(fp_kind) :: blayer(CHUNK, 0:np+1),blevel(CHUNK, np+1),dblayr(CHUNK, np+1),dbs(CHUNK)
+- real(fp_kind) :: dp(CHUNK, np)
+- real(fp_kind) :: trant(CHUNK),tranal(CHUNK),transfc(CHUNK, np+1),trantcr(CHUNK, np+1)
+- real(fp_kind) :: flxu(CHUNK, np+1),flxd(CHUNK, np+1),flcu(CHUNK, np+1),flcd(CHUNK, np+1)
+- real(fp_kind) :: rflx(CHUNK, np+1),rflc(CHUNK, np+1)
++ real(fp_kind) :: pa(chunk, np),dt(chunk, np)
++ real(fp_kind) :: sh2o(chunk, np+1),swpre(chunk, np+1),swtem(chunk, np+1)
++ real(fp_kind) :: sco3(chunk, np+1),scopre(chunk, np+1),scotem(chunk, np+1)
++ real(fp_kind) :: dh2o(chunk, np),dcont(chunk, np),dco2(chunk, np),do3(chunk, np)
++ real(fp_kind) :: dn2o(chunk, np),dch4(chunk, np)
++ real(fp_kind) :: df11(chunk, np),df12(chunk, np),df22(chunk, np)
++ real(fp_kind) :: th2o(chunk, 6),tcon(chunk, 3),tco2(chunk, 6,2)
++ real(fp_kind) :: tn2o(chunk, 4),tch4(chunk, 4),tcom(chunk, 6)
++ real(fp_kind) :: tf11(chunk),tf12(chunk),tf22(chunk)
++ real(fp_kind) :: h2oexp(chunk, np,6),conexp(chunk, np,3),co2exp(chunk, np,6,2)
++ real(fp_kind) :: n2oexp(chunk, np,4),ch4exp(chunk, np,4),comexp(chunk, np,6)
++ real(fp_kind) :: f11exp(chunk, np),f12exp(chunk, np),f22exp(chunk, np)
++ real(fp_kind) :: blayer(chunk, 0:np+1),blevel(chunk, np+1),dblayr(chunk, np+1),dbs(chunk)
++ real(fp_kind) :: dp(chunk, np)
++ real(fp_kind) :: trant(chunk),tranal(chunk),transfc(chunk, np+1),trantcr(chunk, np+1)
++ real(fp_kind) :: flxu(chunk, np+1),flxd(chunk, np+1),flcu(chunk, np+1),flcd(chunk, np+1)
++ real(fp_kind) :: rflx(chunk, np+1),rflc(chunk, np+1)
+  integer :: it,im,ib
+- real(fp_kind) :: cldhi(CHUNK),cldmd(CHUNK),cldlw(CHUNK),tcldlyr(CHUNK, np),fclr(CHUNK)
+- real(fp_kind) :: taerlyr(CHUNK, np)
++ real(fp_kind) :: cldhi(chunk),cldmd(chunk),cldlw(chunk),tcldlyr(chunk, np),fclr(chunk)
++ real(fp_kind) :: taerlyr(chunk, np)
+ 
+  integer :: j,k,ip,iw,ibn,ik,iq,isb,k1,k2,ic
+  real(fp_kind) :: xx,yy,p1,dwe,dpe,a1,b1,fk1,a2,b2,fk2,bu,bd
+-! real(fp_kind) :: w(CHUNK, max_spc),g(CHUNK, max_spc)
++! real(fp_kind) :: w(chunk, max_spc),g(chunk, max_spc)
+  real(fp_kind) :: w1,ww,gg,ff,taux
+  real(fp_kind) :: tauxa
+ 
+@@ -11005,9 +11005,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) pa(CHUNK,np),dt(CHUNK,np),sabs0(CHUNK,np)
++      real(fp_kind) pa(chunk,np),dt(chunk,np),sabs0(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) sabs(CHUNK,np+1),spre(CHUNK,np+1),stem(CHUNK,np+1)
++      real(fp_kind) sabs(chunk,np+1),spre(chunk,np+1),stem(chunk,np+1)
+ !*********************************************************************
+ !dir$ vector aligned
+         DO ic=1,irestrict
+@@ -11052,14 +11052,14 @@
+       implicit none
+       integer ib,np,k,ik,irestrict,ic
+ !---- input parameters ------
+-      real(fp_kind) dh2o(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dh2o(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) h2oexp(CHUNK,np,6)
++      real(fp_kind) h2oexp(chunk,np,6)
+ !---- static data -----
+       integer mw(9)
+       real(fp_kind) xkw(9),aw(9),bw(9),pm(9)
+ !---- temporary arrays -----
+-      real(fp_kind) xh(CHUNK)
++      real(fp_kind) xh(chunk)
+ !**********************************************************************
+ !    note that the 3 sub-bands in band 3 use the same set of xkw, aw,
+ !    and bw,  therefore, h2oexp for these sub-bands are identical.
+@@ -11148,9 +11148,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters ------
+-      real(fp_kind) dcont(CHUNK,np)
++      real(fp_kind) dcont(chunk,np)
+ !---- updated parameters -----
+-      real(fp_kind) conexp(CHUNK,np,3)
++      real(fp_kind) conexp(chunk,np,3)
+ !---- static data -----
+       real(fp_kind) xke(9)
+ !****************************************************************
+@@ -11194,9 +11194,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dco2(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dco2(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) co2exp(CHUNK,np,6,2)
++      real(fp_kind) co2exp(chunk,np,6,2)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !**********************************************************************
+@@ -11271,11 +11271,11 @@
+ 
+ !---- input parameters -----
+ 
+-      real(fp_kind) dn2o(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dn2o(chunk,np),pa(chunk,np),dt(chunk,np)
+ 
+ !---- output parameters -----
+ 
+-      real(fp_kind) n2oexp(CHUNK,np,4)
++      real(fp_kind) n2oexp(chunk,np,4)
+ 
+ !---- temporary arrays -----
+ 
+@@ -11345,9 +11345,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dch4(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dch4(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) ch4exp(CHUNK,np,4)
++      real(fp_kind) ch4exp(chunk,np,4)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !*****  scaling and absorpton data are given in table 5  *****
+@@ -11399,9 +11399,9 @@
+       implicit none
+       integer ib,np,k,ik,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dcom(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dcom(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) comexp(CHUNK,np,6)
++      real(fp_kind) comexp(chunk,np,6)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !*****  scaling and absorpton data are given in table 6  *****
+@@ -11448,9 +11448,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dcfc(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dcfc(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) cfcexp(CHUNK,np)
++      real(fp_kind) cfcexp(chunk,np)
+ !---- static data -----
+       real(fp_kind) a1,b1,fk1,a2,b2,fk2
+ !---- temporary arrays -----
+@@ -11496,11 +11496,11 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dh2o(CHUNK,np),dcont(CHUNK,np),dn2o(CHUNK,np)
+-      real(fp_kind) dco2(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dh2o(chunk,np),dcont(chunk,np),dn2o(chunk,np)
++      real(fp_kind) dco2(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) h2oexp(CHUNK,np,6),conexp(CHUNK,np,3),co2exp(CHUNK,np,6,2) &
+-          ,n2oexp(CHUNK,np,4)
++      real(fp_kind) h2oexp(chunk,np,6),conexp(chunk,np,3),co2exp(chunk,np,6,2) &
++          ,n2oexp(chunk,np,4)
+ !---- temporary arrays -----
+       real(fp_kind) xx,xx1,xx2,xx3
+ !**********************************************************************
+@@ -11608,10 +11608,10 @@
+ !---- input parameters -----
+       integer k1,k2,np,nx,nh,irestrict,ic
+       real(fp_kind) w1,p1,dwe,dpe
+-      real(fp_kind) sabs(CHUNK,np+1),spre(CHUNK,np+1),stem(CHUNK,np+1)
++      real(fp_kind) sabs(chunk,np+1),spre(chunk,np+1),stem(chunk,np+1)
+       real(fp_kind) coef1(nx,nh),coef2(nx,nh),coef3(nx,nh)
+ !---- update parameter -----
+-      real(fp_kind) tran(CHUNK)
++      real(fp_kind) tran(chunk)
+ !---- temporary variables -----
+       real(fp_kind) x1,x2,x3,we,pe,fw,fp,pa,pb,pc,ax,ba,bb,t1,ca,cb,t2
+       integer iw,ip
+@@ -11701,11 +11701,11 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters ------
+-      real(fp_kind) conexp(CHUNK,np,3),h2oexp(CHUNK,np,6)
++      real(fp_kind) conexp(chunk,np,3),h2oexp(chunk,np,6)
+       integer ne(9)
+       real(fp_kind)  fkw(6,9),gkw(6,3)
+ !---- updated parameters -----
+-      real(fp_kind) th2o(CHUNK,6),tcon(CHUNK,3),tran(CHUNK)
++      real(fp_kind) th2o(chunk,6),tcon(chunk,3),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) trnth2o
+ !-----tco2 are the six exp factors between levels k1 and k2
+@@ -11797,9 +11797,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) co2exp(CHUNK,np,6,2)
++      real(fp_kind) co2exp(chunk,np,6,2)
+ !---- updated parameters -----
+-      real(fp_kind) tco2(CHUNK,6,2),tran(CHUNK)
++      real(fp_kind) tco2(chunk,6,2),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tco2 is the 6 exp factors between levels k1 and k2.
+@@ -11862,9 +11862,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) n2oexp(CHUNK,np,4)
++      real(fp_kind) n2oexp(chunk,np,4)
+ !---- updated parameters -----
+-      real(fp_kind) tn2o(CHUNK,4),tran(CHUNK)
++      real(fp_kind) tn2o(chunk,4),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tn2o is computed from eq. (8.20).
+@@ -11918,9 +11918,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) ch4exp(CHUNK,np,4)
++      real(fp_kind) ch4exp(chunk,np,4)
+ !---- updated parameters -----
+-      real(fp_kind) tch4(CHUNK,4),tran(CHUNK)
++      real(fp_kind) tch4(chunk,4),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tch4 is computed from eq. (8.20).
+@@ -11972,9 +11972,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) comexp(CHUNK,np,6)
++      real(fp_kind) comexp(chunk,np,6)
+ !---- updated parameters -----
+-      real(fp_kind) tcom(CHUNK,6),tran(CHUNK)
++      real(fp_kind) tcom(chunk,6),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tcom is computed from eq. (8.20).
+@@ -12039,9 +12039,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) cfcexp(CHUNK,np)
++      real(fp_kind) cfcexp(chunk,np)
+ !---- updated parameters -----
+-      real(fp_kind) tcfc(CHUNK),tran(CHUNK)
++      real(fp_kind) tcfc(chunk),tran(chunk)
+ !-----tcfc is the exp factors between levels k1 and k2.
+ !dir$ vector aligned
+       DO ic=1,irestrict
+@@ -12086,11 +12086,11 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) h2oexp(CHUNK,np,6),conexp(CHUNK,np,3),co2exp(CHUNK,np,6,2) &
+-          ,n2oexp(CHUNK,np,4)
++      real(fp_kind) h2oexp(chunk,np,6),conexp(chunk,np,3),co2exp(chunk,np,6,2) &
++          ,n2oexp(chunk,np,4)
+ !---- updated parameters -----
+-      real(fp_kind) th2o(CHUNK,6),tcon(CHUNK,3),tco2(CHUNK,6,2),tn2o(CHUNK,4) &
+-          ,tran(CHUNK)
++      real(fp_kind) th2o(chunk,6),tcon(chunk,3),tco2(chunk,6,2),tn2o(chunk,4) &
++          ,tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xx
+ !-----for h2o line. the k-distribution functions are given in table 4.
+@@ -12160,10 +12160,10 @@
+ !  fclr:    clear line-of-sight between levels k1 and k2
+ !***********************************************************************
+       implicit none
+-      integer np,k2,ict(CHUNK),icb(CHUNK),irestrict,ic
+-      integer j,k,ii,it,im,ib,itx(CHUNK,np),imx(CHUNK,np),ibx(CHUNK,np)
+-      real(fp_kind) cldhi(CHUNK),cldmd(CHUNK),cldlw(CHUNK)
+-      real(fp_kind) fcld(CHUNK,np),tcldlyr(CHUNK,np),fclr(CHUNK)
++      integer np,k2,ict(chunk),icb(chunk),irestrict,ic
++      integer j,k,ii,it,im,ib,itx(chunk,np),imx(chunk,np),ibx(chunk,np)
++      real(fp_kind) cldhi(chunk),cldmd(chunk),cldlw(chunk)
++      real(fp_kind) fcld(chunk,np),tcldlyr(chunk,np),fclr(chunk)
+ !***********************************************************************
+ !-----for high clouds
+ !     "it" is the number of high-cloud layers
+@@ -12273,23 +12273,23 @@
+  character(len=2), intent(in) :: sw_or_lw   ! character index that determines sw or lw radiation
+  integer, intent(in) :: np             !model verical array size
+  integer, intent(in) :: nband          !# of radiation bands
+- real, intent(in)    :: dz(CHUNK,np)         !layer thickness [m]
+- real, intent(in)    :: q(CHUNK,np ,id_hmax) !hydrometeor mass conc [g/m3]
+- real, intent(inout)    :: re(CHUNK,np,id_hmax) !effective radius [um]
+- real, intent(out)   :: tau(CHUNK,np,nband)  !total optical depth [-]
+- real, intent(out)   :: ssa(CHUNK,np,nband)  !total single scattering albedo [-]
+- real, intent(out)   :: asy(CHUNK,np,nband)  !total asymetry factor [-]
++ real, intent(in)    :: dz(chunk,np)         !layer thickness [m]
++ real, intent(in)    :: q(chunk,np ,id_hmax) !hydrometeor mass conc [g/m3]
++ real, intent(inout)    :: re(chunk,np,id_hmax) !effective radius [um]
++ real, intent(out)   :: tau(chunk,np,nband)  !total optical depth [-]
++ real, intent(out)   :: ssa(chunk,np,nband)  !total single scattering albedo [-]
++ real, intent(out)   :: asy(chunk,np,nband)  !total asymetry factor [-]
+  integer, intent(in) :: irestrict 
+ 
+ !-----Local variables
+ ! real :: ext           !mass extinction coef [m2/g]
+- real :: tau_typ(CHUNK,nband,id_hmax) !optical depth for each aerosol type [-]
+- real :: ssa_typ(CHUNK,nband,id_hmax) !single scattering albedo for each aerosol type [-]
+- real :: asy_typ(CHUNK,nband,id_hmax) !asymetery factor for each aerosol type [-]
+- real :: wgt1(CHUNK), wgt2(CHUNK)        !weight for pressure interpolation
++ real :: tau_typ(chunk,nband,id_hmax) !optical depth for each aerosol type [-]
++ real :: ssa_typ(chunk,nband,id_hmax) !single scattering albedo for each aerosol type [-]
++ real :: asy_typ(chunk,nband,id_hmax) !asymetery factor for each aerosol type [-]
++ real :: wgt1(chunk), wgt2(chunk)        !weight for pressure interpolation
+  integer :: t,k,n,ib,ire,ic
+- real :: ref(CHUNK)
+- logical :: exit_re_loop(CHUNK)
++ real :: ref(chunk)
++ logical :: exit_re_loop(chunk)
+ 
+ !
+ ! check all single scattering tables are allocated and initialized
+diff -u -x set_module_env.bash -x crane.cfg -x '*.pyc' -x __pycache__ -r ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/phys/module_ra_goddard_2017.F ./WRFV3/phys/module_ra_goddard_2017.F
+--- ../nu-wrf_v9p3-wrf391-lis72.pristine/WRFV3/phys/module_ra_goddard_2017.F	2019-05-22 08:13:14.000000000 -0500
++++ ./WRFV3/phys/module_ra_goddard_2017.F	2020-03-27 17:28:55.000000000 -0500
+@@ -124,7 +124,7 @@
+ 
+  implicit none
+ 
+-  INTEGER, PARAMETER, PRIVATE:: CHUNK = 16  !size of vector (16 is optimized number for Haswell/Broadwell CPUs.
++  INTEGER, PARAMETER, PRIVATE:: chunk = 16  !size of vector (16 is optimized number for Haswell/Broadwell CPUs.
+ 
+ !
+ ! encapsulation control
+@@ -1291,7 +1291,7 @@
+  integer :: dk_half    !maximum dimension for k (half level)
+  integer :: i24h
+ 
+- real, dimension( CHUNK )  :: &
++ real, dimension( chunk )  :: &
+     cosz, &  ! cosine of solar zenith angle (0~1)
+   rsuvbm, &  ! surface albedo for direct UV-VIS radiation (-)
+   rsuvdf, &  ! surface albedo for diffuse UV-VIS radiation (-)
+@@ -1302,20 +1302,20 @@
+     p400, &  ! pressure criteria for upper
+     p700     ! pressure criteir for middle
+ 
+- real, dimension( CHUNK, nband_lw ) :: emis1d !IR emissivity (-)
++ real, dimension( chunk, nband_lw ) :: emis1d !IR emissivity (-)
+ 
+- integer, dimension( CHUNK ) ::  &
++ integer, dimension( chunk ) ::  &
+    ict, & ! 400mb level indice
+    icb    ! 700mb level indice
+ 
+ !
+ ! Full-level 1D parameters
+ !
+- real, dimension( CHUNK, kts-1:kte ) :: &
++ real, dimension( chunk, kts-1:kte ) :: &
+      p8w1d, &  ! pressure in full level (mb or hPa)
+      t8w1d     ! temperature in full level (K)
+ 
+- real, dimension( CHUNK, kts-1:kte )  :: &
++ real, dimension( chunk, kts-1:kte )  :: &
+    flx, & !flux fraction (-) or actual flux (W/m2) 
+   flxd, & !donwelling flux fraction [-] (for shortwave) , but actual flux [W/m2] (for longwave)
+   flxu    !upwelling flux fraction [-] (for shortwave) , but actual flux [W/m2] (for longwave) 
+@@ -1323,7 +1323,7 @@
+ !
+ ! Half-level 1D parameters
+ !
+- real, dimension( CHUNK, kts:kte ) ::   &
++ real, dimension( chunk, kts:kte ) ::   &
+      tten1d, &  ! temperature tendency (K/sec)
+        sh1d, &  ! specific humidity (-)
+         p1d, &  ! pressure (mb or hPa)
+@@ -1333,7 +1333,7 @@
+        o31d, &  ! ozone mixing ratio [kg/kg]
+      fcld1d     ! cloud fraction
+ 
+- real,  dimension( CHUNK, kts:kte, id_hmax ) :: &
++ real,  dimension( chunk, kts:kte, id_hmax ) :: &
+          q1d ,& ! condensate mass concentration [g/m3]
+          re1d   ! particle effective radius [um]
+ 
+@@ -1342,28 +1342,28 @@
+ !     salb_gocart,  & ! single scattering albedo [-]
+ !     asym_gocart     ! asymetry parameter [-]
+ 
+- real, dimension( CHUNK, kts:kte, nband_sw ) :: &
++ real, dimension( chunk, kts:kte, nband_sw ) :: &
+   taucl_sw, &  ! hydrometeor optical depth for SW bands 
+   ssacl_sw, &  ! hydrometeor single scattering albedo for SW bands
+   asycl_sw     ! hydrometeor asymetry factor for SW bands
+ 
+- real, dimension( CHUNK, kts:kte, nband_lw ) ::  &
++ real, dimension( chunk, kts:kte, nband_lw ) ::  &
+   taucl_lw, &  ! hydrometeor optical depth for LW bands
+   ssacl_lw, &  ! hydrometeor single scattering albedo for LW bands
+   asycl_lw     ! hydrometeor asymetry factor for LW bands
+ 
+- real, dimension( CHUNK, kts:kte, nband_sw ) :: &
++ real, dimension( chunk, kts:kte, nband_sw ) :: &
+   taual_sw, &  ! aerosol optical depth for SW bands 
+   ssaal_sw, &  ! aerosol single scattering albedo for SW bands
+   asyal_sw     ! aerosol asymetry factor for SW bands
+ 
+- real, dimension( CHUNK, kts:kte, nband_lw ) ::  &
++ real, dimension( chunk, kts:kte, nband_lw ) ::  &
+   taual_lw, &  ! aerosol optical depth for LW bands
+   ssaal_lw, &  ! aerosol single scattering albedo for LW bands
+   asyal_lw     ! aerosol asymetry factor for LW bands
+ 
+ #if (WRF_CHEM == 1)
+- real, dimension( CHUNK, kts:kte, num_go) :: aero1d  !aerosol mass conc [g/m3] 1D reverse k order  (half layer)         
++ real, dimension( chunk, kts:kte, num_go) :: aero1d  !aerosol mass conc [g/m3] 1D reverse k order  (half layer)         
+ 
+ ! type(particle_gocart), dimension( kts:kte ) ::   &
+ !                     a1d  ! aerosol mass concentration [ ]
+@@ -1373,7 +1373,7 @@
+ !
+ ! surface 0D parameters
+ !
+- real :: flxd_surf(CHUNK,1:4)  ! downward surface flux 
++ real :: flxd_surf(chunk,1:4)  ! downward surface flux 
+                          ! 1-direct UV+PAR, 2-diffuse UV+PAR, 3-direct NIR, 4-diffuse NIR
+ 
+ ! misc parameter for calculations
+@@ -1383,14 +1383,14 @@
+ 
+ ! parameters for fast skip radiation 
+  integer :: ij_skip
+- integer,dimension(CHUNK) :: ie,je !block array indice
++ integer,dimension(chunk) :: ie,je !block array indice
+ 
+  INTEGER :: ip, ic, ii
+- logical :: no_micro(CHUNK), lmask(CHUNK) ! No update of theta tendancy (rthraten) and energy budget due to solar heating
++ logical :: no_micro(chunk), lmask(chunk) ! No update of theta tendancy (rthraten) and energy budget due to solar heating
+ 
+ ! now in local parameter for OMP purpose
+ 
+- real,dimension( CHUNK,ilev_max,6)    :: mcdat_int  !interpolated Mclatchy Sounding climatology
++ real,dimension( chunk,ilev_max,6)    :: mcdat_int  !interpolated Mclatchy Sounding climatology
+ 
+ !--------------------       PROGRAM START        ---------------------------------------
+ 
+@@ -1536,16 +1536,16 @@
+ #endif
+ !$OMP SCHEDULE(dynamic,1)
+ 
+-  DO ip = 1,((1+(ite-its+1)/CHUNK)*CHUNK)*(jte-jts+1),CHUNK ! *ij_skip
+-  j  = jts+(ip-1)/((1+(ite-its+1)/CHUNK)*CHUNK) ! *ij_skip
++  DO ip = 1,((1+(ite-its+1)/chunk)*chunk)*(jte-jts+1),chunk ! *ij_skip
++  j  = jts+(ip-1)/((1+(ite-its+1)/chunk)*chunk) ! *ij_skip
+   IF ( j .ge. jts .and. j .le. jte ) THEN
+-  ii = its+mod((ip-1),((1+(ite-its+1)/CHUNK)*CHUNK)) ! *ij_skip
++  ii = its+mod((ip-1),((1+(ite-its+1)/chunk)*chunk)) ! *ij_skip
+ 
+ !TEST
+          q1d(:,:,:) = 0.
+ 
+   if( radiation_skip ) then
+-   DO ic=1,min(CHUNK,ite-ii+1) ! /ij_skip
++   DO ic=1,min(chunk,ite-ii+1) ! /ij_skip
+      i = ii+(ic-1) ! *ij_skip
+      ie(ic) =  min(ite,i+ij_skip-1) ! skip block i end bound
+      je(ic) =  min(jte,j+ij_skip-1) ! skip block j end bound
+@@ -1556,12 +1556,12 @@
+ ! Mclatchy sounding climatologies are temporally and spatially interpolated at each grid's latitude and julday.
+ !
+   if( radiation_skip ) then
+-   DO ic=1,min(CHUNK,ite-ii+1)
++   DO ic=1,min(chunk,ite-ii+1)
+      i = ii+ic-1
+      call sounding_interp( ave(xlat(i:ie(ic),j:je(ic))) , julday , mcdat_int(ic,:,:))  
+    ENDDO
+   else
+-   DO ic=1,min(CHUNK,ite-ii+1)
++   DO ic=1,min(chunk,ite-ii+1)
+      i = ii+ic-1
+      call sounding_interp( xlat(i,j) , julday , mcdat_int(ic,:,:) )
+    ENDDO
+@@ -1572,7 +1572,7 @@
+ !
+   if( radiation_skip ) then
+       do kt=kts-1,kte !full level ( kts -1 = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+ !           km=kme-kt+kms-1  
+            km=kte-kt+kts  
+@@ -1583,7 +1583,7 @@
+       enddo
+   else
+       do kt=kts-1,kte !full level ( kts -1 = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+ !           km=kme-kt+kms-1
+            km=kte-kt+kts
+@@ -1595,7 +1595,7 @@
+   endif
+ 
+ ! Now set up TOA pressure is zero, this is required ...
+-  DO ic=1,min(CHUNK,ite-ii+1)
++  DO ic=1,min(chunk,ite-ii+1)
+     p8w1d(ic,kts-1) = 0.
+   ENDDO
+ 
+@@ -1605,7 +1605,7 @@
+   if( radiation_skip ) then
+ 
+      do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic-1
+ !        km=kme-kt+kms-1
+         km=kte-kt+kts
+@@ -1623,7 +1623,7 @@
+   else
+ 
+      do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic-1
+ !        km=kme-kt+kms-1
+         km=kte-kt+kts
+@@ -1643,7 +1643,7 @@
+ !
+ ! vertical profiles for ozone by pressure in half level.
+ !
+-  DO ic=1,min(CHUNK,ite-ii+1)
++  DO ic=1,min(chunk,ite-ii+1)
+     call ozone_interp( mcdat_int(ic,:,:), dk_half, p1d(ic,:), o31d(ic,:) )
+   ENDDO
+ 
+@@ -1653,7 +1653,7 @@
+ 
+     if ( present( f_qi ) .and. present( qi )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1676,7 +1676,7 @@
+ 
+     if ( present( f_qc ) .and. present( qc )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1699,7 +1699,7 @@
+ 
+     if ( present( f_qr ) .and. present( qr )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1726,7 +1726,7 @@
+ 
+     if ( present( f_qs ) .and. present( qs )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1753,7 +1753,7 @@
+ 
+     if ( present( f_qg ) .and. present( qg )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1780,7 +1780,7 @@
+ 
+     if ( present( f_qh ) .and. present( qh )  ) then 
+       do kt=kts,kte
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+ !         km=kme-kt+kms-1
+          km=kte-kt+kts
+@@ -1813,7 +1813,7 @@
+    p400(:) = 1.e5
+    p700(:) = 1.e5
+    do kt = kts,kte
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+         if (abs(p1d(ic,kt) - 400.) .lt. p400(ic)) then
+             p400(ic) = abs(p1d(ic,kt) - 400.)
+             ict(ic) = kt
+@@ -1839,18 +1839,18 @@
+     ! Derive cloud single-scattering properties
+     ! 
+       call opt_cloud( sw_or_lw, dk_half ,nband_sw, dz1d, q1d, &
+-          re1d, taucl_sw, ssacl_sw, asycl_sw, min(CHUNK,ite-ii+1) )
++          re1d, taucl_sw, ssacl_sw, asycl_sw, min(chunk,ite-ii+1) )
+ 
+     !
+     ! column cloud optical depth for visible (PAR) band
+     ! 
+     if( radiation_skip ) then
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic -1
+       cod2d_out(i:ie(ic),j:je(ic)) = sum(taucl_sw(ic,kts:kte,8)) 
+      ENDDO
+     else
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic -1
+       cod2d_out(i,j) = sum(taucl_sw(ic,kts:kte,8))
+      ENDDO
+@@ -1859,7 +1859,7 @@
+     !
+     ! cloud-top pressure (threshold is optical depth 0.01)
+     !
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+      i = ii+ic -1
+      ctop_loop: do k = kts,kte
+        if( taucl_sw(ic,k,8) >= 0.01 ) then  
+@@ -1876,7 +1876,7 @@
+ !
+ ! compute aerosol sigle-scattering properties.  
+ !
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+      taual_sw(ic,:,:) = 0.
+      ssaal_sw(ic,:,:) = 0.
+      asyal_sw(ic,:,:) = 0.
+@@ -1893,7 +1893,7 @@
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+              do n = 1, num_go
+-               DO ic=1,min(CHUNK,ite-ii+1)
++               DO ic=1,min(chunk,ite-ii+1)
+                  i = ii+ic-1
+                  aero1d(ic,kt,n)=ave(aero(i:ie(ic),km,j:je(ic),n))
+                ENDDO
+@@ -1903,7 +1903,7 @@
+           do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+-             DO ic=1,min(CHUNK,ite-ii+1)
++             DO ic=1,min(chunk,ite-ii+1)
+                i = ii+ic-1
+                aero1d(ic,kt,:)=aero(i,km,j,:)
+              ENDDO
+@@ -1913,7 +1913,7 @@
+         ! Derive aerosol optical properties in 1D manner (must be here to reduce memory size)
+         !
+ 
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           call aero_opt(sw_or_lw, dk_half, nband_sw, p1d(ic,:), t1d(ic,:), sh1d(ic,:), &
+              dz1d(ic,:), aero1d(ic,:,:), taual_sw(ic,:,:), ssaal_sw(ic,:,:), asyal_sw(ic,:,:))
+         ENDDO
+@@ -1922,12 +1922,12 @@
+         ! Output AOD profile at PAR band for diagnostic purpose
+         !
+         if( radiation_skip ) then
+-         DO ic=1,min(CHUNK,ite-ii+1)
++         DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+           aod2d_out(i:ie(ic),j:je(ic))  = sum(taual_sw(ic,:,8))   ! 8 is PAR band (0.400-0.700 micron band)
+          ENDDO
+         else
+-         DO ic=1,min(CHUNK,ite-ii+1)
++         DO ic=1,min(chunk,ite-ii+1)
+           i = ii+ic-1
+           aod2d_out(i,j)  = sum(taual_sw(ic,:,8))   ! 8 is PAR band (0.400-0.700 micron band)
+          ENDDO
+@@ -1936,7 +1936,7 @@
+         !
+         ! Output aerosol-top pressure (useful for PBL)
+         !
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+          i = ii+ic-1
+          atop_loop: do k = kts,kte
+           if( taual_sw(ic,k,8) >= 0.01 ) then
+@@ -1951,7 +1951,7 @@
+         ENDDO
+ 
+      else
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic-1
+        if( radiation_skip ) then
+          aod2d_out(i:ie(ic),j:je(ic)) = 0.e0
+@@ -1971,7 +1971,7 @@
+ !
+ 
+     if (present(coszen)) then ! jararias, 14/08/2013
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic-1
+ !      call wrf_debug(100,'using coszen from radiation driver')
+       if( radiation_skip ) then
+@@ -1985,7 +1985,7 @@
+       !
+       ! estimate cosin of solar zenith angle
+       !
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic-1
+        if( radiation_skip ) then
+          xt24 = mod(xtime + radfrq * 0.5e0, 1440.e0)
+@@ -2013,7 +2013,7 @@
+ !
+ 
+     no_micro = .false.
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+       i = ii+ic-1
+       if (cosz(ic) <= cosz_min ) then !night time skip 
+ 
+@@ -2044,7 +2044,7 @@
+       endif
+     ENDDO
+ 
+-    if (ALL(no_micro(1:min(CHUNK,ite-ii+1)))) cycle
++    if (ALL(no_micro(1:min(chunk,ite-ii+1)))) cycle
+     lmask = .true.
+     lmask = lmask .and. (.not. no_micro)
+ 
+@@ -2054,7 +2054,7 @@
+ ! For example Seller's canopy albedo model gives rsuvbm, rsuvdf, rsirbm, rsirdf
+ ! independently. 
+ !
+-    DO ic=1,min(CHUNK,ite-ii+1)
++    DO ic=1,min(chunk,ite-ii+1)
+     if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+        if( radiation_skip ) then 
+@@ -2073,7 +2073,7 @@
+ !
+ ! drive shortwave (solar) radiative transfer (1D driver)
+ !
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+       if(lmask(ic) .eqv. .true.) then
+         flx(ic,:)=0. ; flxd(ic,:)=0. ; flxu(ic,:)=0.
+       endif
+@@ -2085,13 +2085,13 @@
+                    taucl=dble(taucl_sw), ssacl=dble(ssacl_sw), asycl=dble(asycl_sw), &
+                    taual=dble(taual_sw), ssaal=dble(ssaal_sw), asyal=dble(asyal_sw), &
+                    cosz=dble(cosz), rsuvbm=dble(rsuvbm), rsuvdf=dble(rsuvdf), rsirbm=dble(rsirbm), rsirdf=dble(rsirdf),&
+-                   flx_out=flx, flxd_out=flxd,flxu_out=flxu, flxd_surf = flxd_surf, lmask=lmask, irestrict=min(CHUNK,ite-ii+1) )
++                   flx_out=flx, flxd_out=flxd,flxu_out=flxu, flxd_surf = flxd_surf, lmask=lmask, irestrict=min(chunk,ite-ii+1) )
+ 
+ !
+ ! convert the units of flx from flux fraction to W/m2 (full level)
+ !
+       do kt=kts-1,kte !full level ( kts -1 = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+         if(lmask(ic) .eqv. .true.) then
+          flx(ic,kt) = flx(ic,kt) * solcon * cosz(ic)
+         endif
+@@ -2104,7 +2104,7 @@
+       fac = .01 * g / cp
+ 
+       do kt=kts,kte !half level ( kts = TOA, kte = BOA )
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+         if(lmask(ic) .eqv. .true.) then
+          i = ii+ic -1
+          tten1d(ic,kt) = - fac * (flx(ic,kt-1) - flx(ic,kt)) / (p8w1d(ic,kt-1)-p8w1d(ic,kt))
+@@ -2132,7 +2132,7 @@
+ ! Update theta tendency due to radiative heating (K/sec)
+ !
+       do kt=kts,kte  !half level
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+        if(lmask(ic) .eqv. .true.) then
+         i = ii+ic -1
+ !         km=kme-kt+kms-1
+@@ -2160,7 +2160,7 @@
+ !
+ ! absorbed part in surface energy budget [W/m^2] (Note that flxd in SW is flux fraction)
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+      if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+        gsf(i:ie(ic),j:je(ic)) = (1. - rsuvbm(ic)) * flxd(ic,kte) * solcon * cosz(ic)
+@@ -2171,7 +2171,7 @@
+ ! More detailed surface flux for Seller's canoppy radiative transfer 
+ !
+      do n = 1, 4
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+        if(lmask(ic) .eqv. .true.) then
+          i = ii+ic-1
+          if(present(sflxd)) sflxd(i:ie(ic),j:je(ic),n) = flxd_surf(ic,n) * solcon * cosz(ic)  !surface dir/dif PAR/NIR downward radiation [W/m2]
+@@ -2181,7 +2181,7 @@
+ !
+ ! Extra output for NCAR WRF V3.5.1 (modified)
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+      if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+        if(present(swddni)) swddni(i:ie(ic),j:je(ic)) = (flxd_surf(ic,1)+flxd_surf(ic,3)) * solcon !total SW direct radiation at normal direction [W/m2]
+@@ -2203,7 +2203,7 @@
+ !
+ ! absorbed part in surface energy budget [W/m^2] (Note that flxd in SW is flux fraction)
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+      if(lmask(ic) .eqv. .true.) then
+        i = ii+ic-1
+ 
+@@ -2244,7 +2244,7 @@
+ ! compute condensate single-scattering properties. 
+ !
+       call opt_cloud( sw_or_lw, dk_half ,nband_lw, dz1d, q1d, & 
+-       re1d, taucl_lw, ssacl_lw, asycl_lw, min(CHUNK,ite-ii+1) )
++       re1d, taucl_lw, ssacl_lw, asycl_lw, min(chunk,ite-ii+1) )
+ 
+ !
+ ! initialize aerosol LW optical properties 
+@@ -2264,7 +2264,7 @@
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+              do n = 1, num_go
+-               DO ic=1,min(CHUNK,ite-ii+1)
++               DO ic=1,min(chunk,ite-ii+1)
+                  i = ii+ic-1
+                  aero1d(ic,kt,n)=ave(aero(i:ie(ic),km,j:je(ic),n))
+                ENDDO
+@@ -2274,7 +2274,7 @@
+           do kt=kts,kte   ! half level (kts = TOA, kte = BOA)
+ !             km=kme-kt+kms-1
+              km=kte-kt+kts
+-             DO ic=1,min(CHUNK,ite-ii+1)
++             DO ic=1,min(chunk,ite-ii+1)
+                i = ii+ic-1
+                aero1d(ic,kt,:)=aero(i,km,j,:)
+              ENDDO
+@@ -2284,7 +2284,7 @@
+         !
+         ! Derive aerosol LW optical properties in 1D manner (must be here to reduce memory size)
+         !
+-        DO ic=1,min(CHUNK,ite-ii+1)
++        DO ic=1,min(chunk,ite-ii+1)
+           call aero_opt(sw_or_lw, dk_half, nband_lw, p1d(ic,:), t1d(ic,:), sh1d(ic,:), &
+              dz1d(ic,:), aero1d(ic,:,:), taual_lw(ic,:,:), ssaal_lw(ic,:,:), asyal_lw(ic,:,:))
+         ENDDO
+@@ -2293,7 +2293,7 @@
+         do kt=kts,kte   ! half level (kts = TOA, kte = BOA)    
+ !           km=kme-kt+kms-1
+            km=kte-kt+kts
+-           DO ic=1,min(CHUNK,ite-ii+1)
++           DO ic=1,min(chunk,ite-ii+1)
+              aero1d(ic,kt,:)=0
+            ENDDO
+         enddo
+@@ -2304,7 +2304,7 @@
+ !
+ ! surface parameters
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic -1
+        tsfc(ic)  = t8w1d(ic,kte)   !surface-layer air temperature [K]
+        if( radiation_skip ) then
+@@ -2324,7 +2324,7 @@
+                     emiss=dble(emis1d), fcld=dble(fcld1d), &
+                     taucl=dble(taucl_lw), ssacl=dble(ssacl_lw), asycl=dble(asycl_lw),  &
+                     taual=dble(taual_lw), ssaal=dble(ssaal_lw), asyal=dble(asyal_lw),  &
+-                    flx_out=flx, acflxd_out=flxd, acflxu_out=flxu, irestrict=min(CHUNK,ite-ii+1) )
++                    flx_out=flx, acflxd_out=flxd, acflxu_out=flxu, irestrict=min(chunk,ite-ii+1) )
+ 
+ !
+ ! calculate heating rate (deg/sec)
+@@ -2332,7 +2332,7 @@
+      fac = .01 * g / cp
+ 
+      do kt=kts,kte !half level ( kts = TOA, kte = BOA )
+-       DO ic=1,min(CHUNK,ite-ii+1)
++       DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic -1
+         tten1d(ic,kt) = - fac * (flx(ic,kt-1) - flx(ic,kt)) / (p8w1d(ic,kt-1)-p8w1d(ic,kt))
+ 
+@@ -2359,7 +2359,7 @@
+ ! get theta tendency due to radiative heating (K/sec)
+ !
+      do kt=kts,kte  !half level
+-      DO ic=1,min(CHUNK,ite-ii+1)
++      DO ic=1,min(chunk,ite-ii+1)
+         i = ii+ic -1
+ !        km=kme-kt+kms-1
+         km=kte-kt+kts
+@@ -2377,7 +2377,7 @@
+ !
+ ! downwelling/upwelling longwave radiation [W/m^2] (Note that flxd/flxu of LW is actual flux [W/m2])
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic -1
+        gsf(i:ie(ic),j:je(ic)) = flxd(ic,kte)  !surface downwelling LW radiation
+ 
+@@ -2394,7 +2394,7 @@
+ !
+ ! downwelling/upwelling longwave radiation [W/m^2] (Note that flxd/flxu of LW is actual flux [W/m2])
+ !
+-     DO ic=1,min(CHUNK,ite-ii+1)
++     DO ic=1,min(chunk,ite-ii+1)
+        i = ii+ic -1
+        gsf(i,j) = flxd(ic,kte)  !surface downwelling LW radiation
+ 
+@@ -3237,47 +3237,47 @@
+  implicit none
+ !-----IO parameters
+  integer,intent(in) :: irestrict
+- logical,dimension(CHUNK),intent(in) :: lmask
++ logical,dimension(chunk),intent(in) :: lmask
+  integer,intent(in) :: np  ! # of vertical layer
+- integer,dimension(CHUNK),intent(in) :: ict,icb !vertical index to separate high- middle- and low-clouds
+- real(fp_kind),intent(in) :: pl(CHUNK,1:np+1)
+- real(fp_kind),dimension(CHUNK,np),intent(in) :: ta,wa,oa,fcld
+- real(fp_kind),dimension(CHUNK,np,nband_sw),intent(in) :: taucl,ssacl,asycl  ! condensate optical properties 
+- real(fp_kind),dimension(CHUNK,np,nband_sw),intent(in) :: taual,ssaal,asyal  ! aerosol optical properties 
+- real(fp_kind),dimension(CHUNK),intent(in) :: cosz                        ! cosine of solar zenith angle
+- real(fp_kind),dimension(CHUNK),intent(in) :: rsuvbm,rsuvdf,rsirbm,rsirdf ! vis/nir albedo for beam and iffuse radiaiton
+-
+- real,intent(out) :: flx_out(CHUNK,1:np+1)    !flux divergence (down-up) []
+- real,intent(out) :: flxd_out(CHUNK,1:np+1)   !downward flux fraction []
+- real,intent(out) :: flxu_out(CHUNK,1:np+1)   !upwelling flux fraction []
+- real,intent(out) :: flxd_surf(CHUNK,4)     !1-direct UV+PAR, 2-diffuse UV+PAR, 3-direct NIR, 4-diffuse NIR
++ integer,dimension(chunk),intent(in) :: ict,icb !vertical index to separate high- middle- and low-clouds
++ real(fp_kind),intent(in) :: pl(chunk,1:np+1)
++ real(fp_kind),dimension(chunk,np),intent(in) :: ta,wa,oa,fcld
++ real(fp_kind),dimension(chunk,np,nband_sw),intent(in) :: taucl,ssacl,asycl  ! condensate optical properties 
++ real(fp_kind),dimension(chunk,np,nband_sw),intent(in) :: taual,ssaal,asyal  ! aerosol optical properties 
++ real(fp_kind),dimension(chunk),intent(in) :: cosz                        ! cosine of solar zenith angle
++ real(fp_kind),dimension(chunk),intent(in) :: rsuvbm,rsuvdf,rsirbm,rsirdf ! vis/nir albedo for beam and iffuse radiaiton
++
++ real,intent(out) :: flx_out(chunk,1:np+1)    !flux divergence (down-up) []
++ real,intent(out) :: flxd_out(chunk,1:np+1)   !downward flux fraction []
++ real,intent(out) :: flxu_out(chunk,1:np+1)   !upwelling flux fraction []
++ real,intent(out) :: flxd_surf(chunk,4)     !1-direct UV+PAR, 2-diffuse UV+PAR, 3-direct NIR, 4-diffuse NIR
+ 
+ !-----IO parameter used to be-----
+- real(fp_kind) :: flc(CHUNK,1:np+1)
+- real(fp_kind) :: flx(CHUNK,1:np+1)    !flux divergence (down-up) []
+- real(fp_kind) :: flxd(CHUNK,1:np+1)   !downward flux fraction []
+- real(fp_kind) :: flxu(CHUNK,1:np+1)   !upwelling flux fraction []
+- real(fp_kind) :: fdiruv(CHUNK) ,fdifuv(CHUNK)  !UV 
+- real(fp_kind) :: fdirpar(CHUNK),fdifpar(CHUNK) !PAR
+- real(fp_kind) :: fdirir(CHUNK) ,fdifir(CHUNK)  !NIR
++ real(fp_kind) :: flc(chunk,1:np+1)
++ real(fp_kind) :: flx(chunk,1:np+1)    !flux divergence (down-up) []
++ real(fp_kind) :: flxd(chunk,1:np+1)   !downward flux fraction []
++ real(fp_kind) :: flxu(chunk,1:np+1)   !upwelling flux fraction []
++ real(fp_kind) :: fdiruv(chunk) ,fdifuv(chunk)  !UV 
++ real(fp_kind) :: fdirpar(chunk),fdifpar(chunk) !PAR
++ real(fp_kind) :: fdirir(chunk) ,fdifir(chunk)  !NIR
+ !-----temporary array
+- integer i,j,k,ntop(CHUNK),ic
+- integer :: nctop(CHUNK)
++ integer i,j,k,ntop(chunk),ic
++ integer :: nctop(chunk)
+  real(fp_kind) x
+- real(fp_kind) :: taux(CHUNK,np)     ! total condensates optical depth
+- real(fp_kind) :: dp(CHUNK,np)
+- real(fp_kind) :: wh(CHUNK,np)
+- real(fp_kind) :: oh(CHUNK,np)
+- real(fp_kind) :: scal(CHUNK,np)
+- real(fp_kind) :: swu(CHUNK,np+1)
+- real(fp_kind) :: swh(CHUNK,np+1)
+- real(fp_kind) :: so2(CHUNK,np+1)    !scaled o2 conc
+- real(fp_kind) :: df(CHUNK,np+1)     !integrated flux refuction rate []
+- real(fp_kind) :: df_sub(CHUNK,np+1) !sub-layer flux reduction rate []
+- real(fp_kind) :: df_cld(CHUNK,np+1) !integrated clear-sky flux reduction rate []
+- real(fp_kind) :: df_clr(CHUNK,np+1) !integrated all-sky flux reduction rate []
+- real(fp_kind) :: snt(CHUNK)         !inverse of cosz
+- real(fp_kind) :: cnt(CHUNK)
++ real(fp_kind) :: taux(chunk,np)     ! total condensates optical depth
++ real(fp_kind) :: dp(chunk,np)
++ real(fp_kind) :: wh(chunk,np)
++ real(fp_kind) :: oh(chunk,np)
++ real(fp_kind) :: scal(chunk,np)
++ real(fp_kind) :: swu(chunk,np+1)
++ real(fp_kind) :: swh(chunk,np+1)
++ real(fp_kind) :: so2(chunk,np+1)    !scaled o2 conc
++ real(fp_kind) :: df(chunk,np+1)     !integrated flux refuction rate []
++ real(fp_kind) :: df_sub(chunk,np+1) !sub-layer flux reduction rate []
++ real(fp_kind) :: df_cld(chunk,np+1) !integrated clear-sky flux reduction rate []
++ real(fp_kind) :: df_clr(chunk,np+1) !integrated all-sky flux reduction rate []
++ real(fp_kind) :: snt(chunk)         !inverse of cosz
++ real(fp_kind) :: cnt(chunk)
+ 
+ ! new look-up table for (Fclr/Fall) ratio (overcast_fast option)
+   real(fp_kind) :: ratio, cld_alb
+@@ -5485,19 +5485,19 @@
+ !***********************************************************************
+ !-----input parameters
+  integer,intent(in) :: irestrict
+- logical,dimension(CHUNK),intent(in) :: lmask
+- integer np,ict(CHUNK),icb(CHUNK)
+- real(fp_kind) fcld(CHUNK,np)
+- real(fp_kind) wh(CHUNK,np),oh(CHUNK,np),dp(CHUNK,np)
+- real(fp_kind) taucl(CHUNK,np,nband_sw),ssacl(CHUNK,np,nband_sw),asycl(CHUNK,np,nband_sw)
+- real(fp_kind) taual(CHUNK,np,nband_sw),ssaal(CHUNK,np,nband_sw),asyal(CHUNK,np,nband_sw)
+- real(fp_kind) rsuvbm(CHUNK),rsuvdf(CHUNK),cosz(CHUNK)
++ logical,dimension(chunk),intent(in) :: lmask
++ integer np,ict(chunk),icb(chunk)
++ real(fp_kind) fcld(chunk,np)
++ real(fp_kind) wh(chunk,np),oh(chunk,np),dp(chunk,np)
++ real(fp_kind) taucl(chunk,np,nband_sw),ssacl(chunk,np,nband_sw),asycl(chunk,np,nband_sw)
++ real(fp_kind) taual(chunk,np,nband_sw),ssaal(chunk,np,nband_sw),asyal(chunk,np,nband_sw)
++ real(fp_kind) rsuvbm(chunk),rsuvdf(chunk),cosz(chunk)
+ !-----output (updated) parameter
+- real(fp_kind) flx(CHUNK,np+1),flc(CHUNK,np+1)
+- real(fp_kind) flxd(CHUNK,np+1)
+- real(fp_kind) fdiruv(CHUNK) ,fdifuv(CHUNK)
+- real(fp_kind) fdirpar(CHUNK),fdifpar(CHUNK)
+- real(fp_kind) taux(CHUNK,np)
++ real(fp_kind) flx(chunk,np+1),flc(chunk,np+1)
++ real(fp_kind) flxd(chunk,np+1)
++ real(fp_kind) fdiruv(chunk) ,fdifuv(chunk)
++ real(fp_kind) fdirpar(chunk),fdifpar(chunk)
++ real(fp_kind) taux(chunk,np)
+ 
+ !-----static parameters
+  integer nband
+@@ -5508,41 +5508,41 @@
+ !-----temporary array
+  integer :: k,ib,ic
+  integer ::  ih1,ih2,im1,im2,is1,is2
+- real(fp_kind) :: taurs(CHUNK,np),tauoz(CHUNK,np),tauwv(CHUNK,np) ! TODO: scalarize
++ real(fp_kind) :: taurs(chunk,np),tauoz(chunk,np),tauwv(chunk,np) ! TODO: scalarize
+ ! real(fp_kind) :: g(max_spc) !asymetry factors
+  real(fp_kind) :: dsm
+- real(fp_kind) :: tauclb(CHUNK,np,nband_sw)
+- real(fp_kind) :: tauclf(CHUNK,np,nband_sw)
+- real(fp_kind) :: tausto(CHUNK)
+- real(fp_kind) :: ssatau(CHUNK)
+- real(fp_kind) :: asysto(CHUNK)
+- real(fp_kind) :: tautob(CHUNK)
+- real(fp_kind) :: ssatob(CHUNK)
+- real(fp_kind) :: asytob(CHUNK)
+- real(fp_kind) :: tautof(CHUNK)
+- real(fp_kind) :: ssatof(CHUNK)
+- real(fp_kind) :: asytof(CHUNK)
+- real(fp_kind) :: rr(CHUNK,np+1,2)
+- real(fp_kind) :: tt(CHUNK,np+1,2)
+- real(fp_kind) :: td(CHUNK,np+1,2)
+- real(fp_kind) :: rs(CHUNK,np+1,2)
+- real(fp_kind) :: ts(CHUNK,np+1,2)
+- real(fp_kind) :: fall(CHUNK,np+1)
+- real(fp_kind) :: falld(CHUNK,np+1)
+- real(fp_kind) :: fclr(CHUNK,np+1)
+- real(fp_kind) :: fsdir(CHUNK)
+- real(fp_kind) :: fsdif(CHUNK)
+- real(fp_kind) :: asyclt(CHUNK)
+- real(fp_kind) :: cc(CHUNK,3)
+- real(fp_kind) :: rrt(CHUNK,np)
+- real(fp_kind) :: ttt(CHUNK,np)
+- real(fp_kind) :: tdt(CHUNK,np)
+- real(fp_kind) :: rst(CHUNK,np)
+- real(fp_kind) :: tst(CHUNK,np)
+- real(fp_kind) :: dum1(CHUNK,np+1)
+- real(fp_kind) :: dum2(CHUNK)
+- real(fp_kind) :: dum3(CHUNK)
+- real(fp_kind) :: dum(CHUNK,np)
++ real(fp_kind) :: tauclb(chunk,np,nband_sw)
++ real(fp_kind) :: tauclf(chunk,np,nband_sw)
++ real(fp_kind) :: tausto(chunk)
++ real(fp_kind) :: ssatau(chunk)
++ real(fp_kind) :: asysto(chunk)
++ real(fp_kind) :: tautob(chunk)
++ real(fp_kind) :: ssatob(chunk)
++ real(fp_kind) :: asytob(chunk)
++ real(fp_kind) :: tautof(chunk)
++ real(fp_kind) :: ssatof(chunk)
++ real(fp_kind) :: asytof(chunk)
++ real(fp_kind) :: rr(chunk,np+1,2)
++ real(fp_kind) :: tt(chunk,np+1,2)
++ real(fp_kind) :: td(chunk,np+1,2)
++ real(fp_kind) :: rs(chunk,np+1,2)
++ real(fp_kind) :: ts(chunk,np+1,2)
++ real(fp_kind) :: fall(chunk,np+1)
++ real(fp_kind) :: falld(chunk,np+1)
++ real(fp_kind) :: fclr(chunk,np+1)
++ real(fp_kind) :: fsdir(chunk)
++ real(fp_kind) :: fsdif(chunk)
++ real(fp_kind) :: asyclt(chunk)
++ real(fp_kind) :: cc(chunk,3)
++ real(fp_kind) :: rrt(chunk,np)
++ real(fp_kind) :: ttt(chunk,np)
++ real(fp_kind) :: tdt(chunk,np)
++ real(fp_kind) :: rst(chunk,np)
++ real(fp_kind) :: tst(chunk,np)
++ real(fp_kind) :: dum1(chunk,np+1)
++ real(fp_kind) :: dum2(chunk)
++ real(fp_kind) :: dum3(chunk)
++ real(fp_kind) :: dum(chunk,np)
+ !-----hk is the fractional extra-terrestrial solar flux in each
+ !     of the 8 bands. the sum of hk is 0.47074. (table 3)
+       data hk/.00057, .00367, .00083, .00417, &
+@@ -5911,19 +5911,19 @@
+ !
+ !**********************************************************************
+ !-----input parameters
+- logical lmask(CHUNK)
++ logical lmask(chunk)
+  integer irestrict
+- integer np,ict(CHUNK),icb(CHUNK)
++ integer np,ict(chunk),icb(chunk)
+  integer ih1,ih2,im1,im2,is1,is2
+- real(fp_kind) fcld(CHUNK,np),cosz(CHUNK)
+- real(fp_kind) rsirbm(CHUNK),rsirdf(CHUNK)
+- real(fp_kind) taucl(CHUNK,np,nband_sw),ssacl(CHUNK,np,nband_sw),asycl(CHUNK,np,nband_sw)
+- real(fp_kind) taual(CHUNK,np,nband_sw),ssaal(CHUNK,np,nband_sw),asyal(CHUNK,np,nband_sw)
+- real(fp_kind) dp(CHUNK,np),wh(CHUNK,np)
++ real(fp_kind) fcld(chunk,np),cosz(chunk)
++ real(fp_kind) rsirbm(chunk),rsirdf(chunk)
++ real(fp_kind) taucl(chunk,np,nband_sw),ssacl(chunk,np,nband_sw),asycl(chunk,np,nband_sw)
++ real(fp_kind) taual(chunk,np,nband_sw),ssaal(chunk,np,nband_sw),asyal(chunk,np,nband_sw)
++ real(fp_kind) dp(chunk,np),wh(chunk,np)
+ !-----output (updated) parameters
+- real(fp_kind) flx(CHUNK,np+1),flc(CHUNK,np+1)
+- real(fp_kind) flxd(CHUNK,np+1)
+- real(fp_kind) fdirir(CHUNK),fdifir(CHUNK)
++ real(fp_kind) flx(chunk,np+1),flc(chunk,np+1)
++ real(fp_kind) flxd(chunk,np+1)
++ real(fp_kind) fdirir(chunk),fdifir(chunk)
+ !-----static parameters
+  integer nk,nband
+  parameter (nk=10,nband=3)
+@@ -5938,39 +5938,39 @@
+  integer ib,iv,ik,k,ic
+  real(fp_kind) taurs,tauwv
+  real(fp_kind) :: dsm
+- real(fp_kind) :: tauclb(CHUNK,np)
+- real(fp_kind) :: tauclf(CHUNK,np)
+- real(fp_kind) :: cc(CHUNK,3)
+- real(fp_kind) :: rr(CHUNK,np+1,2)
+- real(fp_kind) :: tt(CHUNK,np+1,2)
+- real(fp_kind) :: td(CHUNK,np+1,2)
+- real(fp_kind) :: rs(CHUNK,np+1,2)
+- real(fp_kind) :: ts(CHUNK,np+1,2)
+- real(fp_kind) :: fall(CHUNK,np+1)
+- real(fp_kind) :: falld(CHUNK,np+1)
+- real(fp_kind) :: fclr(CHUNK,np+1)
+- real(fp_kind) :: fsdir(CHUNK)
+- real(fp_kind) :: fsdif(CHUNK)
+- real(fp_kind) :: tausto(CHUNK,np)
+- real(fp_kind) :: ssatau(CHUNK,np)
+- real(fp_kind) :: asysto(CHUNK,np)
+- real(fp_kind) :: tautob(CHUNK,np)
+- real(fp_kind) :: ssatob(CHUNK,np)
+- real(fp_kind) :: asytob(CHUNK,np)
+- real(fp_kind) :: tautof(CHUNK,np)
+- real(fp_kind) :: ssatof(CHUNK,np)
+- real(fp_kind) :: asytof(CHUNK,np)
+-! real(fp_kind) :: ssaclt(CHUNK)
+-! real(fp_kind) :: asyclt(CHUNK)
+- real(fp_kind) :: rrt(CHUNK,np)
+- real(fp_kind) :: ttt(CHUNK,np)
+- real(fp_kind) :: tdt(CHUNK,np)
+- real(fp_kind) :: rst(CHUNK,np)
+- real(fp_kind) :: tst(CHUNK,np)
+- real(fp_kind) :: dum1(CHUNK,np+1)
+- real(fp_kind) :: dum2(CHUNK)
+- real(fp_kind) :: dum3(CHUNK)
+- real(fp_kind) :: dum(CHUNK,np)
++ real(fp_kind) :: tauclb(chunk,np)
++ real(fp_kind) :: tauclf(chunk,np)
++ real(fp_kind) :: cc(chunk,3)
++ real(fp_kind) :: rr(chunk,np+1,2)
++ real(fp_kind) :: tt(chunk,np+1,2)
++ real(fp_kind) :: td(chunk,np+1,2)
++ real(fp_kind) :: rs(chunk,np+1,2)
++ real(fp_kind) :: ts(chunk,np+1,2)
++ real(fp_kind) :: fall(chunk,np+1)
++ real(fp_kind) :: falld(chunk,np+1)
++ real(fp_kind) :: fclr(chunk,np+1)
++ real(fp_kind) :: fsdir(chunk)
++ real(fp_kind) :: fsdif(chunk)
++ real(fp_kind) :: tausto(chunk,np)
++ real(fp_kind) :: ssatau(chunk,np)
++ real(fp_kind) :: asysto(chunk,np)
++ real(fp_kind) :: tautob(chunk,np)
++ real(fp_kind) :: ssatob(chunk,np)
++ real(fp_kind) :: asytob(chunk,np)
++ real(fp_kind) :: tautof(chunk,np)
++ real(fp_kind) :: ssatof(chunk,np)
++ real(fp_kind) :: asytof(chunk,np)
++! real(fp_kind) :: ssaclt(chunk)
++! real(fp_kind) :: asyclt(chunk)
++ real(fp_kind) :: rrt(chunk,np)
++ real(fp_kind) :: ttt(chunk,np)
++ real(fp_kind) :: tdt(chunk,np)
++ real(fp_kind) :: rst(chunk,np)
++ real(fp_kind) :: tst(chunk,np)
++ real(fp_kind) :: dum1(chunk,np+1)
++ real(fp_kind) :: dum2(chunk)
++ real(fp_kind) :: dum3(chunk)
++ real(fp_kind) :: dum(chunk,np)
+ !-----water vapor absorption coefficient for 10 k-intervals.
+ !     unit: cm^2/gm (table 2)
+       data xk/ &
+@@ -6102,7 +6102,7 @@
+ 
+ !dir$ vector aligned
+    DO ic=1,irestrict
+-!   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++!   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+            taurs=ry(ib)*dp(ic,k) 
+@@ -6119,7 +6119,7 @@
+ 
+ !dir$ vector aligned
+    DO ic=1,irestrict
+-!   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++!   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+              rr(ic,k,1)=0.e0
+@@ -6135,7 +6135,7 @@
+ 
+ !dir$ vector aligned
+    DO ic=1,irestrict
+-!   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++!   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+ !-----compute reflectance and transmittance of the clear portion of a layer
+@@ -6167,7 +6167,7 @@
+    enddo
+ !dir$ vector aligned
+    DO ic=1,irestrict
+-!   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++!   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+              rr(ic,k,1)=rrt(ic,k)
+@@ -6183,7 +6183,7 @@
+ 
+ !dir$ vector aligned
+    DO ic=1,irestrict
+-!   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++!   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+ !-----compute reflectance and transmittance of the cloudy portion of a layer
+@@ -6231,7 +6231,7 @@
+ 
+ !dir$ vector aligned
+    DO ic=1,irestrict
+-!   do concurrent ( ic = 1:min(CHUNK,irestrict) )
++!   do concurrent ( ic = 1:min(chunk,irestrict) )
+    if(lmask(ic) .eqv. .true.) then
+ 
+           rr(ic,k,2)=rrt(ic,k)
+@@ -6344,12 +6344,12 @@
+ !********************************************************************
+       implicit none
+ !-----input parameters
+-      logical lmask(CHUNK)
++      logical lmask(chunk)
+       integer irestrict
+-      integer np,ict(CHUNK),icb(CHUNK)
+-      real(fp_kind) cosz(CHUNK),fcld(CHUNK,np),taucld(CHUNK,np)
++      integer np,ict(chunk),icb(chunk)
++      real(fp_kind) cosz(chunk),fcld(chunk,np),taucld(chunk,np)
+ !-----output parameters
+-      real(fp_kind) cc(CHUNK,3),tauclb(CHUNK,np),tauclf(CHUNK,np)
++      real(fp_kind) cc(chunk,3),tauclb(chunk,np),tauclf(chunk,np)
+ !-----temporary variables
+       integer i,j,k,im,it,ia,kk,ic
+       real(fp_kind)  fm,ft,fa,xai,taux
+@@ -6762,33 +6762,33 @@
+ !ccshie 8/19/04
+      implicit none
+ !-----input parameters
+-      logical lmask(CHUNK)
++      logical lmask(chunk)
+       integer irestrict
+-      integer np,ict(CHUNK),icb(CHUNK),ih1,ih2,im1,im2,is1,is2
+-      real(fp_kind) rr(CHUNK,np+1,2),tt(CHUNK,np+1,2),td(CHUNK,np+1,2)
+-      real(fp_kind) rs(CHUNK,np+1,2),ts(CHUNK,np+1,2)
+-      real(fp_kind) cc(CHUNK,3)
++      integer np,ict(chunk),icb(chunk),ih1,ih2,im1,im2,is1,is2
++      real(fp_kind) rr(chunk,np+1,2),tt(chunk,np+1,2),td(chunk,np+1,2)
++      real(fp_kind) rs(chunk,np+1,2),ts(chunk,np+1,2)
++      real(fp_kind) cc(chunk,3)
+ !-----temporary array
+       integer k,ih,im,is
+       real(fp_kind) denm,xx,yy
+       real(fp_kind) fupdif
+-      real(fp_kind) :: rra(CHUNK,np+1,2,2)
+-      real(fp_kind) :: tta(CHUNK,np+1,2,2)
+-      real(fp_kind) :: tda(CHUNK,np+1,2,2)
+-      real(fp_kind) :: rsa(CHUNK,np+1,2,2)
+-      real(fp_kind) :: rxa(CHUNK,np+1,2,2)
+-      real(fp_kind) :: ch(CHUNK)
+-      real(fp_kind) :: cm(CHUNK)
+-      real(fp_kind) :: ct(CHUNK)
+-      real(fp_kind) :: flxdn(CHUNK,np+1)
+-      real(fp_kind) :: fdndir(CHUNK)
+-      real(fp_kind) :: fdndif(CHUNK)
+-      real(fp_kind) flxdnu(CHUNK,np+1),flxdnd(CHUNK,np+1)
++      real(fp_kind) :: rra(chunk,np+1,2,2)
++      real(fp_kind) :: tta(chunk,np+1,2,2)
++      real(fp_kind) :: tda(chunk,np+1,2,2)
++      real(fp_kind) :: rsa(chunk,np+1,2,2)
++      real(fp_kind) :: rxa(chunk,np+1,2,2)
++      real(fp_kind) :: ch(chunk)
++      real(fp_kind) :: cm(chunk)
++      real(fp_kind) :: ct(chunk)
++      real(fp_kind) :: flxdn(chunk,np+1)
++      real(fp_kind) :: fdndir(chunk)
++      real(fp_kind) :: fdndif(chunk)
++      real(fp_kind) flxdnu(chunk,np+1),flxdnd(chunk,np+1)
+ 
+ !-----output parameters
+-      real(fp_kind) fclr(CHUNK,np+1),fall(CHUNK,np+1)
+-      real(fp_kind) falld(CHUNK,np+1)
+-      real(fp_kind) fsdir(CHUNK),fsdif(CHUNK)
++      real(fp_kind) fclr(chunk,np+1),fall(chunk,np+1)
++      real(fp_kind) falld(chunk,np+1)
++      real(fp_kind) fsdir(chunk),fsdif(chunk)
+ 
+       integer :: ic
+ 
+@@ -7079,13 +7079,13 @@
+ !     due to co2 absorption.
+       implicit none
+ !-----input parameters
+-      logical lmask(CHUNK)
++      logical lmask(chunk)
+       integer irestrict
+       integer np,nu,nw
+       real(fp_kind) u1,du,w1,dw
+-      real(fp_kind) swc(CHUNK,np+1),swh(CHUNK,np+1),tbl(nu,nw)
++      real(fp_kind) swc(chunk,np+1),swh(chunk,np+1),tbl(nu,nw)
+ !-----output (undated) parameter
+-      real(fp_kind) df(CHUNK,np+1)
++      real(fp_kind) df(chunk,np+1)
+ !-----temporary array
+       integer k,ic,iw,i
+       real(fp_kind) clog,wlog,dc,dd,x0,x1,x2,y0,y1,y2
+@@ -7096,7 +7096,7 @@
+          y1=w1-0.5*dw
+ 
+       do k= 2, np+1
+-      DO i=1,min(CHUNK,irestrict)
++      DO i=1,min(chunk,irestrict)
+       if(lmask(i) .eqv. .true.) then
+           clog=min(swc(i,k),x0)
+           clog=max(swc(i,k),x1)
+@@ -7249,22 +7249,22 @@
+ !
+ !***************************************************************************
+ !---- input parameters ------
+- integer ,intent(in) ::  np,ict(CHUNK),icb(CHUNK)
+- real(fp_kind) ,intent(in) :: pl(CHUNK, np+1),ta(CHUNK, np),wa(CHUNK, np),oa(CHUNK, np), &
+-                     tb(CHUNK), ts(CHUNK), emiss(CHUNK, nband_lw)
+- real(fp_kind) ,intent(in)  :: fcld(CHUNK, np)
+- real(fp_kind) , intent(in) :: taucl(CHUNK, np,nband_lw),ssacl(CHUNK, np,nband_lw),asycl(CHUNK, np,nband_lw)
+- real(fp_kind) , intent(in) :: taual(CHUNK, np,nband_lw),ssaal(CHUNK, np,nband_lw),asyal(CHUNK, np,nband_lw)
++ integer ,intent(in) ::  np,ict(chunk),icb(chunk)
++ real(fp_kind) ,intent(in) :: pl(chunk, np+1),ta(chunk, np),wa(chunk, np),oa(chunk, np), &
++                     tb(chunk), ts(chunk), emiss(chunk, nband_lw)
++ real(fp_kind) ,intent(in)  :: fcld(chunk, np)
++ real(fp_kind) , intent(in) :: taucl(chunk, np,nband_lw),ssacl(chunk, np,nband_lw),asycl(chunk, np,nband_lw)
++ real(fp_kind) , intent(in) :: taual(chunk, np,nband_lw),ssaal(chunk, np,nband_lw),asyal(chunk, np,nband_lw)
+  integer :: irestrict
+ !---- output parameters ------
+- real,intent(out) :: flx_out(CHUNK, np+1)
+- real,intent(out) :: acflxu_out(CHUNK, np+1)
+- real,intent(out) :: acflxd_out(CHUNK, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
++ real,intent(out) :: flx_out(chunk, np+1)
++ real,intent(out) :: acflxu_out(chunk, np+1)
++ real,intent(out) :: acflxd_out(chunk, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
+ 
+- real(fp_kind) :: flx(CHUNK, np+1)
+- real(fp_kind) :: acflxu(CHUNK, np+1),acflxd(CHUNK, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
++ real(fp_kind) :: flx(chunk, np+1)
++ real(fp_kind) :: acflxu(chunk, np+1),acflxd(chunk, np+1)  !upwelling and downwelling broadband LW flux [W/m2]
+ 
+- real(fp_kind) :: flc(CHUNK, np+1),dfdts(CHUNK, np+1), sfcem(CHUNK)
++ real(fp_kind) :: flc(chunk, np+1),dfdts(chunk, np+1), sfcem(chunk)
+ 
+ !---- static data -----
+  real(fp_kind) :: cb(6,10),xkw(9),xke(9),aw(9),bw(9),pm(9),fkw(6,9),gkw(6,3)
+@@ -7286,30 +7286,30 @@
+  real(fp_kind) :: h71(nx2,nh),h72(nx2,nh),h73(nx2,nh)
+  real(fp_kind) :: h81(nx2,nh),h82(nx2,nh),h83(nx2,nh)
+ !---- temporary arrays -----
+- real(fp_kind) :: pa(CHUNK, np),dt(CHUNK, np)
+- real(fp_kind) :: sh2o(CHUNK, np+1),swpre(CHUNK, np+1),swtem(CHUNK, np+1)
+- real(fp_kind) :: sco3(CHUNK, np+1),scopre(CHUNK, np+1),scotem(CHUNK, np+1)
+- real(fp_kind) :: dh2o(CHUNK, np),dcont(CHUNK, np),dco2(CHUNK, np),do3(CHUNK, np)
+- real(fp_kind) :: dn2o(CHUNK, np),dch4(CHUNK, np)
+- real(fp_kind) :: df11(CHUNK, np),df12(CHUNK, np),df22(CHUNK, np)
+- real(fp_kind) :: th2o(CHUNK, 6),tcon(CHUNK, 3),tco2(CHUNK, 6,2)
+- real(fp_kind) :: tn2o(CHUNK, 4),tch4(CHUNK, 4),tcom(CHUNK, 6)
+- real(fp_kind) :: tf11(CHUNK),tf12(CHUNK),tf22(CHUNK)
+- real(fp_kind) :: h2oexp(CHUNK, np,6),conexp(CHUNK, np,3),co2exp(CHUNK, np,6,2)
+- real(fp_kind) :: n2oexp(CHUNK, np,4),ch4exp(CHUNK, np,4),comexp(CHUNK, np,6)
+- real(fp_kind) :: f11exp(CHUNK, np),f12exp(CHUNK, np),f22exp(CHUNK, np)
+- real(fp_kind) :: blayer(CHUNK, 0:np+1),blevel(CHUNK, np+1),dblayr(CHUNK, np+1),dbs(CHUNK)
+- real(fp_kind) :: dp(CHUNK, np)
+- real(fp_kind) :: trant(CHUNK),tranal(CHUNK),transfc(CHUNK, np+1),trantcr(CHUNK, np+1)
+- real(fp_kind) :: flxu(CHUNK, np+1),flxd(CHUNK, np+1),flcu(CHUNK, np+1),flcd(CHUNK, np+1)
+- real(fp_kind) :: rflx(CHUNK, np+1),rflc(CHUNK, np+1)
++ real(fp_kind) :: pa(chunk, np),dt(chunk, np)
++ real(fp_kind) :: sh2o(chunk, np+1),swpre(chunk, np+1),swtem(chunk, np+1)
++ real(fp_kind) :: sco3(chunk, np+1),scopre(chunk, np+1),scotem(chunk, np+1)
++ real(fp_kind) :: dh2o(chunk, np),dcont(chunk, np),dco2(chunk, np),do3(chunk, np)
++ real(fp_kind) :: dn2o(chunk, np),dch4(chunk, np)
++ real(fp_kind) :: df11(chunk, np),df12(chunk, np),df22(chunk, np)
++ real(fp_kind) :: th2o(chunk, 6),tcon(chunk, 3),tco2(chunk, 6,2)
++ real(fp_kind) :: tn2o(chunk, 4),tch4(chunk, 4),tcom(chunk, 6)
++ real(fp_kind) :: tf11(chunk),tf12(chunk),tf22(chunk)
++ real(fp_kind) :: h2oexp(chunk, np,6),conexp(chunk, np,3),co2exp(chunk, np,6,2)
++ real(fp_kind) :: n2oexp(chunk, np,4),ch4exp(chunk, np,4),comexp(chunk, np,6)
++ real(fp_kind) :: f11exp(chunk, np),f12exp(chunk, np),f22exp(chunk, np)
++ real(fp_kind) :: blayer(chunk, 0:np+1),blevel(chunk, np+1),dblayr(chunk, np+1),dbs(chunk)
++ real(fp_kind) :: dp(chunk, np)
++ real(fp_kind) :: trant(chunk),tranal(chunk),transfc(chunk, np+1),trantcr(chunk, np+1)
++ real(fp_kind) :: flxu(chunk, np+1),flxd(chunk, np+1),flcu(chunk, np+1),flcd(chunk, np+1)
++ real(fp_kind) :: rflx(chunk, np+1),rflc(chunk, np+1)
+  integer :: it,im,ib
+- real(fp_kind) :: cldhi(CHUNK),cldmd(CHUNK),cldlw(CHUNK),tcldlyr(CHUNK, np),fclr(CHUNK)
+- real(fp_kind) :: taerlyr(CHUNK, np)
++ real(fp_kind) :: cldhi(chunk),cldmd(chunk),cldlw(chunk),tcldlyr(chunk, np),fclr(chunk)
++ real(fp_kind) :: taerlyr(chunk, np)
+ 
+  integer :: j,k,ip,iw,ibn,ik,iq,isb,k1,k2,ic
+  real(fp_kind) :: xx,yy,p1,dwe,dpe,a1,b1,fk1,a2,b2,fk2,bu,bd
+-! real(fp_kind) :: w(CHUNK, max_spc),g(CHUNK, max_spc)
++! real(fp_kind) :: w(chunk, max_spc),g(chunk, max_spc)
+  real(fp_kind) :: w1,ww,gg,ff,taux
+  real(fp_kind) :: tauxa
+ 
+@@ -11048,9 +11048,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) pa(CHUNK,np),dt(CHUNK,np),sabs0(CHUNK,np)
++      real(fp_kind) pa(chunk,np),dt(chunk,np),sabs0(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) sabs(CHUNK,np+1),spre(CHUNK,np+1),stem(CHUNK,np+1)
++      real(fp_kind) sabs(chunk,np+1),spre(chunk,np+1),stem(chunk,np+1)
+ !*********************************************************************
+ !dir$ vector aligned
+         DO ic=1,irestrict
+@@ -11095,14 +11095,14 @@
+       implicit none
+       integer ib,np,k,ik,irestrict,ic
+ !---- input parameters ------
+-      real(fp_kind) dh2o(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dh2o(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) h2oexp(CHUNK,np,6)
++      real(fp_kind) h2oexp(chunk,np,6)
+ !---- static data -----
+       integer mw(9)
+       real(fp_kind) xkw(9),aw(9),bw(9),pm(9)
+ !---- temporary arrays -----
+-      real(fp_kind) xh(CHUNK)
++      real(fp_kind) xh(chunk)
+ !**********************************************************************
+ !    note that the 3 sub-bands in band 3 use the same set of xkw, aw,
+ !    and bw,  therefore, h2oexp for these sub-bands are identical.
+@@ -11191,9 +11191,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters ------
+-      real(fp_kind) dcont(CHUNK,np)
++      real(fp_kind) dcont(chunk,np)
+ !---- updated parameters -----
+-      real(fp_kind) conexp(CHUNK,np,3)
++      real(fp_kind) conexp(chunk,np,3)
+ !---- static data -----
+       real(fp_kind) xke(9)
+ !****************************************************************
+@@ -11237,9 +11237,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dco2(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dco2(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) co2exp(CHUNK,np,6,2)
++      real(fp_kind) co2exp(chunk,np,6,2)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !**********************************************************************
+@@ -11314,11 +11314,11 @@
+ 
+ !---- input parameters -----
+ 
+-      real(fp_kind) dn2o(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dn2o(chunk,np),pa(chunk,np),dt(chunk,np)
+ 
+ !---- output parameters -----
+ 
+-      real(fp_kind) n2oexp(CHUNK,np,4)
++      real(fp_kind) n2oexp(chunk,np,4)
+ 
+ !---- temporary arrays -----
+ 
+@@ -11388,9 +11388,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dch4(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dch4(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) ch4exp(CHUNK,np,4)
++      real(fp_kind) ch4exp(chunk,np,4)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !*****  scaling and absorpton data are given in table 5  *****
+@@ -11442,9 +11442,9 @@
+       implicit none
+       integer ib,np,k,ik,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dcom(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dcom(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) comexp(CHUNK,np,6)
++      real(fp_kind) comexp(chunk,np,6)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !*****  scaling and absorpton data are given in table 6  *****
+@@ -11491,9 +11491,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dcfc(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dcfc(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) cfcexp(CHUNK,np)
++      real(fp_kind) cfcexp(chunk,np)
+ !---- static data -----
+       real(fp_kind) a1,b1,fk1,a2,b2,fk2
+ !---- temporary arrays -----
+@@ -11539,11 +11539,11 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) dh2o(CHUNK,np),dcont(CHUNK,np),dn2o(CHUNK,np)
+-      real(fp_kind) dco2(CHUNK,np),pa(CHUNK,np),dt(CHUNK,np)
++      real(fp_kind) dh2o(chunk,np),dcont(chunk,np),dn2o(chunk,np)
++      real(fp_kind) dco2(chunk,np),pa(chunk,np),dt(chunk,np)
+ !---- output parameters -----
+-      real(fp_kind) h2oexp(CHUNK,np,6),conexp(CHUNK,np,3),co2exp(CHUNK,np,6,2) &
+-          ,n2oexp(CHUNK,np,4)
++      real(fp_kind) h2oexp(chunk,np,6),conexp(chunk,np,3),co2exp(chunk,np,6,2) &
++          ,n2oexp(chunk,np,4)
+ !---- temporary arrays -----
+       real(fp_kind) xx,xx1,xx2,xx3
+ !**********************************************************************
+@@ -11651,10 +11651,10 @@
+ !---- input parameters -----
+       integer k1,k2,np,nx,nh,irestrict,ic
+       real(fp_kind) w1,p1,dwe,dpe
+-      real(fp_kind) sabs(CHUNK,np+1),spre(CHUNK,np+1),stem(CHUNK,np+1)
++      real(fp_kind) sabs(chunk,np+1),spre(chunk,np+1),stem(chunk,np+1)
+       real(fp_kind) coef1(nx,nh),coef2(nx,nh),coef3(nx,nh)
+ !---- update parameter -----
+-      real(fp_kind) tran(CHUNK)
++      real(fp_kind) tran(chunk)
+ !---- temporary variables -----
+       real(fp_kind) x1,x2,x3,we,pe,fw,fp,pa,pb,pc,ax,ba,bb,t1,ca,cb,t2
+       integer iw,ip
+@@ -11744,11 +11744,11 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters ------
+-      real(fp_kind) conexp(CHUNK,np,3),h2oexp(CHUNK,np,6)
++      real(fp_kind) conexp(chunk,np,3),h2oexp(chunk,np,6)
+       integer ne(9)
+       real(fp_kind)  fkw(6,9),gkw(6,3)
+ !---- updated parameters -----
+-      real(fp_kind) th2o(CHUNK,6),tcon(CHUNK,3),tran(CHUNK)
++      real(fp_kind) th2o(chunk,6),tcon(chunk,3),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) trnth2o
+ !-----tco2 are the six exp factors between levels k1 and k2
+@@ -11840,9 +11840,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) co2exp(CHUNK,np,6,2)
++      real(fp_kind) co2exp(chunk,np,6,2)
+ !---- updated parameters -----
+-      real(fp_kind) tco2(CHUNK,6,2),tran(CHUNK)
++      real(fp_kind) tco2(chunk,6,2),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tco2 is the 6 exp factors between levels k1 and k2.
+@@ -11905,9 +11905,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) n2oexp(CHUNK,np,4)
++      real(fp_kind) n2oexp(chunk,np,4)
+ !---- updated parameters -----
+-      real(fp_kind) tn2o(CHUNK,4),tran(CHUNK)
++      real(fp_kind) tn2o(chunk,4),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tn2o is computed from eq. (8.20).
+@@ -11961,9 +11961,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) ch4exp(CHUNK,np,4)
++      real(fp_kind) ch4exp(chunk,np,4)
+ !---- updated parameters -----
+-      real(fp_kind) tch4(CHUNK,4),tran(CHUNK)
++      real(fp_kind) tch4(chunk,4),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tch4 is computed from eq. (8.20).
+@@ -12015,9 +12015,9 @@
+       implicit none
+       integer ib,np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) comexp(CHUNK,np,6)
++      real(fp_kind) comexp(chunk,np,6)
+ !---- updated parameters -----
+-      real(fp_kind) tcom(CHUNK,6),tran(CHUNK)
++      real(fp_kind) tcom(chunk,6),tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xc
+ !-----tcom is computed from eq. (8.20).
+@@ -12082,9 +12082,9 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) cfcexp(CHUNK,np)
++      real(fp_kind) cfcexp(chunk,np)
+ !---- updated parameters -----
+-      real(fp_kind) tcfc(CHUNK),tran(CHUNK)
++      real(fp_kind) tcfc(chunk),tran(chunk)
+ !-----tcfc is the exp factors between levels k1 and k2.
+ !dir$ vector aligned
+       DO ic=1,irestrict
+@@ -12129,11 +12129,11 @@
+       implicit none
+       integer np,k,irestrict,ic
+ !---- input parameters -----
+-      real(fp_kind) h2oexp(CHUNK,np,6),conexp(CHUNK,np,3),co2exp(CHUNK,np,6,2) &
+-          ,n2oexp(CHUNK,np,4)
++      real(fp_kind) h2oexp(chunk,np,6),conexp(chunk,np,3),co2exp(chunk,np,6,2) &
++          ,n2oexp(chunk,np,4)
+ !---- updated parameters -----
+-      real(fp_kind) th2o(CHUNK,6),tcon(CHUNK,3),tco2(CHUNK,6,2),tn2o(CHUNK,4) &
+-          ,tran(CHUNK)
++      real(fp_kind) th2o(chunk,6),tcon(chunk,3),tco2(chunk,6,2),tn2o(chunk,4) &
++          ,tran(chunk)
+ !---- temporary arrays -----
+       real(fp_kind) xx
+ !-----for h2o line. the k-distribution functions are given in table 4.
+@@ -12203,10 +12203,10 @@
+ !  fclr:    clear line-of-sight between levels k1 and k2
+ !***********************************************************************
+       implicit none
+-      integer np,k2,ict(CHUNK),icb(CHUNK),irestrict,ic
+-      integer j,k,ii,it,im,ib,itx(CHUNK,np),imx(CHUNK,np),ibx(CHUNK,np)
+-      real(fp_kind) cldhi(CHUNK),cldmd(CHUNK),cldlw(CHUNK)
+-      real(fp_kind) fcld(CHUNK,np),tcldlyr(CHUNK,np),fclr(CHUNK)
++      integer np,k2,ict(chunk),icb(chunk),irestrict,ic
++      integer j,k,ii,it,im,ib,itx(chunk,np),imx(chunk,np),ibx(chunk,np)
++      real(fp_kind) cldhi(chunk),cldmd(chunk),cldlw(chunk)
++      real(fp_kind) fcld(chunk,np),tcldlyr(chunk,np),fclr(chunk)
+ !***********************************************************************
+ !-----for high clouds
+ !     "it" is the number of high-cloud layers
+@@ -12316,23 +12316,23 @@
+  character(len=2), intent(in) :: sw_or_lw   ! character index that determines sw or lw radiation
+  integer, intent(in) :: np             !model verical array size
+  integer, intent(in) :: nband          !# of radiation bands
+- real, intent(in)    :: dz(CHUNK,np)         !layer thickness [m]
+- real, intent(in)    :: q(CHUNK,np ,id_hmax) !hydrometeor mass conc [g/m3]
+- real, intent(inout)    :: re(CHUNK,np,id_hmax) !effective radius [um]
+- real, intent(out)   :: tau(CHUNK,np,nband)  !total optical depth [-]
+- real, intent(out)   :: ssa(CHUNK,np,nband)  !total single scattering albedo [-]
+- real, intent(out)   :: asy(CHUNK,np,nband)  !total asymetry factor [-]
++ real, intent(in)    :: dz(chunk,np)         !layer thickness [m]
++ real, intent(in)    :: q(chunk,np ,id_hmax) !hydrometeor mass conc [g/m3]
++ real, intent(inout)    :: re(chunk,np,id_hmax) !effective radius [um]
++ real, intent(out)   :: tau(chunk,np,nband)  !total optical depth [-]
++ real, intent(out)   :: ssa(chunk,np,nband)  !total single scattering albedo [-]
++ real, intent(out)   :: asy(chunk,np,nband)  !total asymetry factor [-]
+  integer, intent(in) :: irestrict 
+ 
+ !-----Local variables
+ ! real :: ext           !mass extinction coef [m2/g]
+- real :: tau_typ(CHUNK,nband,id_hmax) !optical depth for each aerosol type [-]
+- real :: ssa_typ(CHUNK,nband,id_hmax) !single scattering albedo for each aerosol type [-]
+- real :: asy_typ(CHUNK,nband,id_hmax) !asymetery factor for each aerosol type [-]
+- real :: wgt1(CHUNK), wgt2(CHUNK)        !weight for pressure interpolation
++ real :: tau_typ(chunk,nband,id_hmax) !optical depth for each aerosol type [-]
++ real :: ssa_typ(chunk,nband,id_hmax) !single scattering albedo for each aerosol type [-]
++ real :: asy_typ(chunk,nband,id_hmax) !asymetery factor for each aerosol type [-]
++ real :: wgt1(chunk), wgt2(chunk)        !weight for pressure interpolation
+  integer :: t,k,n,ib,ire,ic
+- real :: ref(CHUNK)
+- logical :: exit_re_loop(CHUNK)
++ real :: ref(chunk)
++ logical :: exit_re_loop(chunk)
+ 
+ !
+ ! check all single scattering tables are allocated and initialized
