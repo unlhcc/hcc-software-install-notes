@@ -3,10 +3,7 @@
 echo "Sourcing set_module_env.bash"
 
 module purge
-module load compiler/intel/19 openmpi/4.0 python/3.7 intel-mkl/19
-
-export LD_LIBRARY_PATH=/util/opt/nuwrf/v9/deps/lib:/util/opt/nuwrf/v9/deps/lib/libO/Linux.intel.64.openmpi.default:$LD_LIBRARY_PATH
-export LIBRARY_PATH=/util/opt/nuwrf/v9/deps/lib:/util/opt/nuwrf/v9/deps/lib/libO/Linux.intel.64.openmpi.default:$LIBRARY_PATH
+module load NUWRF/intel/v9
 
 export WRF_USE_MPI=1
 export WPS_USE_MPI=1
