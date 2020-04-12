@@ -9,7 +9,7 @@ make clean && make distclean
 #CFLAGS="-DMPICH_IGNORE_CXX_SEEK" \
 #CPPFLAGS="-I/util/opt/hdf5/1.8/openmpi/gcc/4.8/include" \
 
-#  Have to do this instead of --with-hdf5=... because NetCDF is dumb
+#  Have to do this instead of --with-hdf5=...
 export CC='mpicc'
 export CPPFLAGS='-I/util/opt/hdf5/1.8/openmpi/gcc/4.8/include -I/util/opt/szip/2.1/gcc/4.8/include -I/util/opt/zlib/1.2/gcc/4.8/include -I/util/opt/netcdf/4.2.1.1/gcc/4.8/include'
 export CFLAGS="-DMPICH_IGNORE_CXX_SEEK"
