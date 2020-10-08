@@ -20,3 +20,13 @@ cmake  -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE="Release" \
 
 make
 make install
+
+# same song, second verse since you can't build both shared and static libs at once
+popd
+rm -rf build.pgi20.static && mkdir -p build.pgi20.static
+pushd build.pgi20.static
+cmake  -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE="Release" \
+ -DCMAKE_PREFIX_PATH="/util/opt/szip/2.1.1/pgi/20;/util/opt/zlib/1.2.11/pgi/20;/util/opt/hdf5/1.12/pgi/20;/util/opt/netcdf/4.7.4/pgi/20.4" \
+ -DCMAKE_INSTALL_LIBDIR=lib -DHAVE_SZIP_WRITE=1 -DBUILD_SHARED_LIBS=OFF ..  # The HAVE_SZIP_WRITE test is broken with PGI, so force it to 1
+make
+make install
