@@ -27,3 +27,13 @@ sed -i s/-shared//   liblib/CMakeFiles/netcdf.dir/link.txt
 
 make -j 4
 make install
+
+# build the static lib
+popd
+rm -rf build.pgi20.static && mkdir -p build.pgi20.static
+pushd build.pgi20
+cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DENABLE_LARGE_FILE_SUPPORT=ON -DCMAKE_BUILD_TYPE="Release" \
+ -DCMAKE_PREFIX_PATH="/util/opt/szip/2.1.1/pgi/20;/util/opt/zlib/1.2.11/pgi/20;/util/opt/hdf5/1.12/pgi/20" \
+ -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=OFF ..
+make -j 4
+make install
