@@ -1,0 +1,11 @@
+--- ./src/alps/utility/set_zero.hpp.org	2021-03-29 19:03:40.152203390 -0500
++++ ./src/alps/utility/set_zero.hpp	2021-03-29 19:03:50.732202308 -0500
+@@ -50,7 +50,7 @@
+ inline typename boost::enable_if<is_sequence<X>,void>::type
+ set_zero(X& x)
+ {
+-  std::fill(x.begin(),x.end(),typename element_type<X>::type());
++  std::fill(begin(x),end(x),typename element_type<X>::type());
+ }
+
+
