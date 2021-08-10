@@ -1,0 +1,73 @@
+unpack NAMD and matching Charm++ source code:
+  tar xzf NAMD_2.14_Source.tar.gz
+  cd NAMD_2.14_Source
+  tar xf charm-6.10.2.tar
+
+Build and test the Charm++/Converse library (single-node multicore version):
+  cd charm-6.10.2
+  ./build charm++ multicore-linux-x86_64 --with-production
+  cd multicore-linux-x86_64/tests/charm++/megatest
+  make pgm
+  ./pgm +p4   (multicore does not support multiple nodes)
+  cd ../../../../..
+
+Build and test the library (ethernet version):
+  cd charm-6.10.2
+  ./build charm++ netlrts-linux-x86_64 --with-production
+  cd netlrts-linux-x86_64/tests/charm++/megatest
+  make pgm
+  ./charmrun ++local +p4 ./pgm   (forks processes on local node)
+  cd ../../../../..
+
+Build and test the Charm++/Converse library (InfiniBand verbs version):
+  cd charm-6.10.2
+  ./build charm++ verbs-linux-x86_64 --with-production
+  cd verbs-linux-x86_64/tests/charm++/megatest
+  make pgm
+  ./charmrun ++mpiexec +p4 ./pgm   (uses mpiexec to launch processes)
+  cd ../../../../..
+
+
+Build and test the Charm++/Converse library (MPI version):
+  cd charm-6.10.2
+  env MPICXX=mpicxx ./build charm++ mpi-linux-x86_64 --with-production
+  cd mpi-linux-x86_64/tests/charm++/megatest
+  make pgm
+  mpiexec -n 4 ./pgm   (run as any other MPI program on your cluster)
+  cd ../../../../..
+
+Download and install TCL and FFTW libraries:
+  (cd to NAMD_2.14_Source if you're not already there)
+  wget http://www.ks.uiuc.edu/Research/namd/libraries/fftw-linux-x86_64.tar.gz
+  tar xzf fftw-linux-x86_64.tar.gz
+  mv linux-x86_64 fftw
+  wget http://www.ks.uiuc.edu/Research/namd/libraries/tcl8.5.9-linux-x86_64.tar.gz
+  wget http://www.ks.uiuc.edu/Research/namd/libraries/tcl8.5.9-linux-x86_64-threaded.tar.gz
+  tar xzf tcl8.5.9-linux-x86_64.tar.gz
+  tar xzf tcl8.5.9-linux-x86_64-threaded.tar.gz
+  mv tcl8.5.9-linux-x86_64 tcl
+  mv tcl8.5.9-linux-x86_64-threaded tcl-threaded
+
+Optionally edit various configuration files:
+  (not needed if charm-6.10.2, fftw, and tcl are in NAMD_2.14_Source)
+  vi Make.charm  (set CHARMBASE to full path to charm)
+  vi arch/Linux-x86_64.fftw     (fix library name and path to files)
+  vi arch/Linux-x86_64.tcl      (fix library version and path to TCL files)
+
+Set up build directory and compile:
+  multicore version: ./config Linux-x86_64-g++ --charm-arch multicore-linux-x86_64
+  ethernet version: ./config Linux-x86_64-g++ --charm-arch netlrts-linux-x86_64
+  InfiniBand verbs version: ./config Linux-x86_64-g++ --charm-arch verbs-linux-x86_64
+  InfiniBand UCX version: ./config Linux-x86_64-g++ --charm-arch ucx-linux-x86_64-ompipmix
+  MPI version: ./config Linux-x86_64-g++ --charm-arch mpi-linux-x86_64
+  cd Linux-x86_64-g++
+  make   (or gmake -j4, which should run faster)
+
+Quick tests using one and two processes (ethernet version):
+  (this is a 66-atom simulation so don't expect any speedup)
+  ./namd2
+  ./namd2 src/alanin
+  ./charmrun ++local +p2 ./namd2
+  ./charmrun ++local +p2 ./namd2 src/alanin
+  (for MPI or UCX version, run namd2 binary as for MPI executable)
+
