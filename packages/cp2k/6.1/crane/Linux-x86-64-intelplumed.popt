@@ -1,0 +1,57 @@
+# Author: Alfio Lazzaro (alfio.lazzaro@chem.uzh.ch), UZH, 2018
+# Note: add optimization flags specific for your system (e.g. -xHost).
+
+LIBINT   = /util/opt/libint/1.1.4-intel-16
+
+include /util/opt/plumed/2.4/intel/16/openmpi/3.1/lib/plumed/src/lib/Plumed.inc
+
+MPI_HOME = /util/opt/openmpi/3.1/intel/16
+INTEL_MKL = /util/comp/intel/15/mkl
+INTEL_INC = $(INTEL_MKL)/include/fftw
+INTEL_LIB = $(INTEL_MKL)/lib/intel64
+
+CC       = $(MPI_HOME)/bin/mpicc
+CPP      =
+FC       = $(MPI_HOME)/bin/mpif90
+LD       = $(MPI_HOME)/bin/mpif90
+AR       = xiar -r
+#CC       = cc
+#CPP      = 
+#FC       = mpifort
+#LD       = mpifort
+#AR       = ar -r
+CPPFLAGS = -C -traditional $(DFLAGS) -I$(INTEL_INC) -I$(MPI_HOME)/include -I/util/opt/plumed/2.4/intel/16/openmpi/3.1/lib/plumed/src/lib/Plumed.inc
+#DFLAGS   = -D__MKL -D__FFTW3 -D__HAS_NO_SHARED_GLIBC \
+#	   -D__parallel -D__SCALAPACK \
+#           -D__PLUMED2 \
+#           -D__LIBINT -D__LIBINT_MAX_AM=7 -D__LIBDERIV_MAX_AM1=6 \
+#           -D__MAX_CONTR=4
+DFLAGS   = -D__INTEL -D__FFTSG -D__parallel -D__BLACS -D__SCALAPACK -D__FFTW3 -D__FFTMKL -D__LIBINT -D__LIBINT_MAX_AM=6 -D__LIBDERIV_MAX_AM1=5 -D__PLUMED2
+
+CFLAGS   = $(DFLAGS) -O2
+FCFLAGS  = $(DFLAGS) -O2 -funroll-loops -fpp -free
+FCFLAGS += -fp-model precise
+FCFLAGS += -g -traceback
+FCFLAGS += -I${MKLROOT}/include -I${MKLROOT}/include/fftw
+LDFLAGS  = $(FCFLAGS) -static-intel
+LDFLAGS_C = $(FCFLAGS) -static-intel -nofor_main
+MKL_LIB  = ${MKLROOT}/lib/intel64
+#LIBS    += $(MKL_LIB)/libmkl_scalapack_lp64.a -Wl,--start-group \
+#	   $(MKL_LIB)/libmkl_intel_lp64.a ${MKL_LIB}/libmkl_sequential.a \
+#	   $(MKL_LIB)/libmkl_core.a \
+#           ${MKL_LIB}/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group \
+#           -lpthread -lm
+#LIBS    += -L$(LIBINT)/lib -lderiv -lint -lstdc++ -lz -ldl \
+#           -L/util/opt/plumed/2.4/intel/16/openmpi/3.1/lib -lplumed
+LIBS     = -L$(INTEL_LIB) -L$(MPI_HOME)/lib \
+           -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lfftw3xf_intel \
+           -lmkl_scalapack_lp64 \
+           -lmkl_blacs_openmpi_lp64 \
+           /util/opt/libint/1.1.4-intel-16/lib/libderiv.a \
+           /util/opt/libint/1.1.4-intel-16/lib/libint.a \
+           -L/util/opt/plumed/2.4/intel/16/openmpi/3.1/lib -lplumed \
+           -lz -ldl -lstdc++
+
+# Required due to memory leak that occurs if high optimisations are used
+mp2_optimize_ri_basis.o: mp2_optimize_ri_basis.F
+			 $(FC) -c $(subst O2,O0,$(FCFLAGS)) $<
