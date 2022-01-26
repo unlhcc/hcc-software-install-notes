@@ -1,0 +1,87 @@
+# Precompiler options
+CPP_OPTIONS= -DHOST=\"LinuxPGI\" \
+             -DMPI -DMPI_BLOCK=8000 -DMPI_INPLACE -Duse_collective \
+             -DscaLAPACK \
+             -DCACHE_SIZE=4000 \
+             -Davoidalloc \
+             -Dvasp6 \
+             -Duse_bse_te \
+             -Dtbdyn \
+             -Dfock_dblbuf \
+             -D_OPENMP \
+             -D_OPENACC \
+             -DUSENCCL -DUSENCCLP2P
+
+CPP        = nvfortran -Mpreprocess -Mfree -Mextend -E $(CPP_OPTIONS) $*$(FUFFIX)  > $*$(SUFFIX)
+
+#          the cuda CC's to build for are set globally for the toolkit in the localrc file
+FC         = mpif90 -acc -mp
+FCL        = mpif90 -acc -c++libs -mp
+
+FREE       = -Mfree
+
+FFLAGS     = -Mbackslash -Mlarge_arrays
+
+OFLAG      = -fast
+
+DEBUG      = -Mfree -O0 -traceback
+
+# Specify your NV HPC-SDK installation, try to set NVROOT automatically
+#NVROOT     =$(shell which nvfortran | awk -F /compilers/bin/nvfortran '{ print $$1 }')
+# ...or set NVROOT manually
+NVHPC      ?= /util/opt/nvidia-hpc-sdk/2021.219/
+NVVERSION  = 21.9
+NVROOT     = $(NVHPC)/Linux_x86_64/$(NVVERSION)
+
+# Use NV HPC-SDK provided BLAS and LAPACK libraries
+BLAS       = -lblas
+LAPACK     = -llapack
+
+BLACS      =
+SCALAPACK  = -Mscalapack
+
+LLIBS      = $(SCALAPACK) $(LAPACK) $(BLAS)
+
+OBJECTS    = fftmpiw.o fftmpi_map.o fftw3d.o fft3dlib.o
+
+# Use the FFTs from fftw
+FFTW       ?= /util/opt/fftw3/3.3/gcc/8.4
+LLIBS      += -L$(FFTW)/lib -lfftw3 -lfftw3_omp
+INCS       += -I$(FFTW)/include
+
+# Use MKL for BLAS, (sca)LAPACK, and FFTW (overwrite LLIBS and INCS)
+MKLROOT	  ?= /util/comp/intel/19/mkl
+LLIBS      = -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl
+LLIBS     += -L/util/comp/intel/19/lib/intel64 -liomp5
+#LLIBS      += -L/opt/intel/compilers_and_libraries_2020.0.166/linux/compiler/lib/intel64_lin -liomp5
+INCS       = -I$(MKLROOT)/include/fftw
+
+CUDA       = -cudalib=cublas,cusolver,cufft,nccl -cuda
+LLIBS      +=  $(CUDA)
+
+# Software emulation of quadruple precsion
+CPP_OPTIONS+= -Dqd_emulate
+QD         ?= $(NVROOT)/compilers/extras/qd
+LLIBS      += -L$(QD)/lib -lqdmod -lqd
+INCS       += -I$(QD)/include/qd
+
+# Redefine the standard list of O1 and O2 objects
+SOURCE_O1  := pade_fit.o
+SOURCE_O2  := pead.o
+
+# For what used to be vasp.5.lib
+CPP_LIB    = $(CPP)
+FC_LIB     = nvfortran
+CC_LIB     = nvc
+CFLAGS_LIB = -O
+FFLAGS_LIB = -O1 -Mfixed
+FREE_LIB   = $(FREE)
+
+OBJECTS_LIB= linpack_double.o getshmem.o
+
+# For the parser library
+CXX_PARS   = nvc++ --no_warnings
+
+# Normally no need to change this
+SRCDIR     = ../../src
+BINDIR     = ../../bin
