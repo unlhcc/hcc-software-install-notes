@@ -12,4 +12,4 @@ export DFTD4_ROOT=$DFTD4
 
 rm -f makefile.include && cp makefile.include.intel_ompi_mkl_omp makefile.include
 make veryclean
-make all
+make DEPS=1 -j 4 all
