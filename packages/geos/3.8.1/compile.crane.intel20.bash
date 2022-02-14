@@ -1,8 +1,8 @@
 #!/bin/bash
 
 module purge
-module load compiler/pgi/20
-PREFIX=/util/opt/geos/3.8.1/pgi/20.4
+module load compiler/intel/20
+PREFIX=/util/opt/geos/3.8.1/intel/19.1.3
 
 make clean && make distclean
 ./configure --prefix=${PREFIX}
