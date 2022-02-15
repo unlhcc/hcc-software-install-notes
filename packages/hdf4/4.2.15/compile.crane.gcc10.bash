@@ -6,9 +6,8 @@ module purge
 module load compiler/gcc/10 szip/2.1 zlib/1.2 libjpeg/2.0
 export LIBS="-ltirpc"
 export FFLAGS="-fallow-argument-mismatch $FFLAGS"
-
-#export CFLAGS="-Bstatic $CFLAGS"
-#export FFLAGS="-Bstatic $FFLAGS"
+export CFLAGS="-fPIC $CFLAGS"
+export FFLAGS="-fPIC $FFLAGS"
 
 PREFIX=/util/opt/hdf4/4.2.15/gcc/10
 
