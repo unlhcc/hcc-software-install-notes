@@ -7,8 +7,9 @@ PREFIX=/util/opt/hdf5/1.12.0/openmpi/4.0.5/pgi/20.4
 
 module load compiler/pgi/20 openmpi/4.0 szip/2.1 zlib/1.2
 
-export CFLAGS="-O3 -ip $CFLAGS"
-echo $CFLAGS
+export CFLAGS="$CFLAGS -fPIC"
+export CXXFLAGS="$CXXFLAGS -fPIC"
+export FCFLAGS="$FCFLAGS -fPIC"
 
 export CC=mpicc
 export CXX=mpic++
