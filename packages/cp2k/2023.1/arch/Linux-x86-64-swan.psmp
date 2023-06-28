@@ -1,0 +1,19 @@
+CC          = mpicc
+FC          = mpifort
+AR          = ar -r
+LD          = $(FC)
+
+CFLAGS     += -march=haswell -mtune=icelake-server -O2 -fopenmp -fp-model precise -funroll-loops -g -qopenmp-simd -traceback
+CFLAGS     += -mkl=parallel -lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64
+CPPFLAGS   += -C -P -traditional -D__NO_IPI_DRIVER -nostdinc
+DFLAGS      = -D__FFTW3 -D__LIBXSMM -D__parallel -D__SCALAPACK -D__SPGLIB -D__LIBXC -D__LIBINT -D__PLUMED2
+
+FCFLAGS	   = $(CFLAGS) $(DFLAGS)
+FCFLAGS    += $(FFLAGS) -I$(FFTW3)/include -I$(LIBXC)/include -I$(LIBINT)/include -I$(PLUMED)/include -I$(LIBXSMM)/include -I$(SPGLIB)/include
+FCFLAGS	   += -diag-disable=8291 -diag-disable=8293 -fpp -free -I$(MKLROOT)/include -I$(MKLROOT)/include/fftw
+
+LIBS	   = -L$(FFTW3)/lib -L$(LIBXC)/lib -L$(LIBINT)/lib -L$(PLUMED)/lib -L$(LIBXSMM)/lib -L$(SPGLIB)/lib
+LIBS       += -mkl=parallel -lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64
+LIBS       +=  -lfftw3 -lfftw3_omp -lxsmmf -lxsmm -ldl -lrt -lsymspg -lxcf03 -lxc -lint2 -lstdc++ -lplumed -fopenmp
+
+LDFLAGS_C = -nofor-main
