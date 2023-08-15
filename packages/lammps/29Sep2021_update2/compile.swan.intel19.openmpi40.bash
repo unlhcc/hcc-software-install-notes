@@ -65,6 +65,7 @@ cmake -DCMAKE_INSTALL_PREFIX=$PREFIX \
       -DINTEL_ARCH=cpu \
       -DINTEL_LRT_MODE=c++11 \
       -DPKG_EXTRA-DUMP=yes \
+      -DCMAKE_TUNE_FLAGS='' \
       ../cmake
 
 make -j 4

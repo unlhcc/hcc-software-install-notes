@@ -62,6 +62,7 @@ cmake -DCMAKE_INSTALL_PREFIX=$PREFIX \
       -DPKG_YAFF=yes \
       -DPKG_GPU=yes \
       -DGPU_API=cuda \
+      -DCMAKE_TUNE_FLAGS='' \
       ../cmake
 
 make -j 4

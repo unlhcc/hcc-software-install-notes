@@ -60,6 +60,7 @@ cmake -DCMAKE_INSTALL_PREFIX=$PREFIX \
       -DPKG_TALLY=yes \
       -DPKG_UEF=yes \
       -DPKG_YAFF=yes \
+      -DCMAKE_TUNE_FLAGS='' \
       ../cmake
 
 make -j 4

@@ -69,6 +69,7 @@ cmake -DCMAKE_INSTALL_PREFIX=$PREFIX \
       -DPKG_EXTRA-DUMP=yes \
       -DPKG_PLUMED=yes \
       -DPLUMED_MODE=shared \
+      -DCMAKE_TUNE_FLAGS='' \
       ../cmake
 
 make -j 4
