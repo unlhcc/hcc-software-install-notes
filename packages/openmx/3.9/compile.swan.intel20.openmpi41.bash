@@ -1,12 +1,12 @@
 #!/bin/bash
-
+  
 module purge
 module load compiler/intel/20 intel-mkl/20 openmpi/4.0 fftw3/3.3
 
-mkdir -p /util/opt/openmx/3.9/openmpi/4.0/intel/20/
+mkdir -p /util/opt/openmx/3.9/openmpi/4.1/intel/20/
 
 # apply patch
-cd /util/opt/openmx/3.9/openmpi/4.0/intel/20/
+cd /util/opt/openmx/3.9/openmpi/4.1/intel/20/
 cp ./patch3.9.9.tar.gz ./source
 rm patch3.9.9.tar.gz
 cd ./source
