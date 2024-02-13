@@ -16,3 +16,9 @@ make COMPILER=intel MPIF90=mpifort
 
 cd ..
 make clean
+
+  #compile sdfutils
+  cd /util/opt/epoch/4.19/intel/20/openmpi/4.0/
+  patch -p0 < patch.txt
+  make sdfutilsclean
+  make sdfutils

@@ -1,0 +1,22 @@
+--- epoch1d/Makefile-old	2024-02-12 19:33:22.100443522 -0600
++++ epoch1d/Makefile	2024-02-12 19:35:40.954229665 -0600
+@@ -420,7 +420,7 @@
+ 
+ sdfutils:
+ 	@cd $(SDF)/../C; make
+-	@cd $(SDF)/../utilities; ./build
++	@cd $(SDF)/../utilities; ./build -3 -d -s
+ 
+ sdfutilsclean:
+ 	@cd $(SDF)/../C; make clean
+--- SDF/utilities/build-old	2024-02-12 17:49:58.084160903 -0600
++++ SDF/utilities/build	2024-02-12 17:50:35.861375070 -0600
+@@ -81,7 +81,7 @@
+       uflags=
+     fi
+     CFLAGS="$OPT" $PYTHONCMD setup.py build $PYDBG -b pybuild install \
+-        $uflags --record pybuild/files.txt || errcode=1
++        --prefix=/util/opt/epoch/4.19/intel/20/openmpi/4.0/  --record pybuild/files.txt || errcode=1
+   fi
+   which a2x > /dev/null 2>&1
+   if [ $? -eq 0 ]; then
