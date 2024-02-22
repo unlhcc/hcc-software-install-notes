@@ -23,3 +23,8 @@ cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
 
 make -j4
 make install
+ipatchelf --set-rpath /util/comp/gcc/10/lib64:/util/opt/ambertools/22/gcc/10/openmpi/4.1//lib:/util/opt/anaconda/deployed-conda-envs/packages/cmake/envs/cmake-3.20.2/lib /util/opt/ambertools/22/gcc/10/openmpi/4.1/bin/metatwist 
+patchelf --set-rpath /util/comp/gcc/10/lib64:/util/opt/ambertools/22/gcc/10/openmpi/4.1//lib:/util/opt/anaconda/deployed-conda-envs/packages/cmake/envs/cmake-3.20.2/lib /util/opt/ambertools/22/gcc/10/openmpi/4.1/bin/cpptraj
+patchelf --set-rpath /util/comp/gcc/10/lib64:/util/opt/ambertools/22/gcc/10/openmpi/4.1//lib:/util/opt/anaconda/deployed-conda-envs/packages/cmake/envs/cmake-3.20.2/lib /util/opt/ambertools/22/gcc/10/openmpi/4.1/bin/cpptraj.OMP
+patchelf --set-rpath /util/comp/gcc/10/lib64:/util/opt/ambertools/22/gcc/10/openmpi/4.1//lib:/util/opt/anaconda/deployed-conda-envs/packages/cmake/envs/cmake-3.20.2/lib /util/opt/ambertools/22/gcc/10/openmpi/4.1/bin/cpptraj.cuda
+patchelf --set-rpath /util/comp/gcc/10/lib64:/util/opt/ambertools/22/gcc/10/openmpi/4.1//lib:/util/opt/anaconda/deployed-conda-envs/packages/cmake/envs/cmake-3.20.2/lib /util/opt/ambertools/22/gcc/10/openmpi/4.1/bin/ambpdb
