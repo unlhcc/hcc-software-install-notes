@@ -24,3 +24,6 @@ you can omit the cluster name as well.
 ### Create a merge request
 Create a new branch for any additions, push to Gitlab and open a MR.
 Upon merge, the master branch will automatically be synced to Github.
+
+### Useful links
+[Intel Compiler Options and CPU compatibility](https://www.nas.nasa.gov/hecc/support/kb/recommended-compiler-options_99.html)
