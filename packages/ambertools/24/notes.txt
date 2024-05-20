@@ -1,0 +1,3 @@
+To install AmberTools/24 with PMEMD, then you need first to extract Amber24 after that extract Ambertools which will be extracted in the same directory as Amber then configure, make, and make install.
+
+Note:  libstdc++ should come from gcc and not cmake  even though the executables work. So, that's why we have used patchelf --set-rpath  in the script.
