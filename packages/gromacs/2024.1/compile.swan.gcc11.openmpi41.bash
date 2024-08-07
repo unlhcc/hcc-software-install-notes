@@ -10,7 +10,8 @@ export PREFIX=/util/opt/gromacs/2024.1/openmpi/4.1.5/gcc/11.2.0/
 cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
   -DCMAKE_C_COMPILER=mpicc \
   -DCMAKE_CXX_COMPILER=mpic++ \
-  -DFFTW_INCLUDE_DIR=/util/opt/fftw3/3.3/openmpi/4.1/gcc/11/include \
+  -DFFTW_INCLUDE_DIR=${FFTW3}/include \
+  -DGMX_FFT_LIBRARY=fftw3 \
   -DGMX_MPI=ON \
   -DGMX_DOUBLE=ON \
   -DGMX_BUILD_OWN_FFTW=OFF \
@@ -18,6 +19,7 @@ cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
   -DGMX_BINARY_SUFFIX="" \
   -DGMX_LIBS_SUFFIX="" \
   -DGMX_GPU=OFF \
+  -DGMX_SIMD=AVX2_256 \
    ..
 
 make -j4

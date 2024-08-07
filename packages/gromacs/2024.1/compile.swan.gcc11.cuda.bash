@@ -10,13 +10,15 @@ export PREFIX=/util/opt/gromacs-gpu/2024.1/gcc/11.2.0/
 cmake -DGMX_GPU=CUDA \
   -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_HOME} \
   -DCMAKE_INSTALL_PREFIX=${PREFIX}  \
-  -DFFTWF_INCLUDE_DIR=/util/opt/fftw3/3.3/openmpi/4.1/gcc/11/include \
+  -DFFTWF_INCLUDE_DIR=${FFTW3}/include \
+  -DGMX_FFT_LIBRARY=fftw3 \
   -DCMAKE_C_COMPILER=gcc \
   -DCMAKE_CXX_COMPILER=g++ \
   -DGMX_BUILD_OWN_FFTW=OFF \
   -DGMX_DEFAULT_SUFFIX=OFF \
   -DGMX_BINARY_SUFFIX="" \
   -DGMX_LIBS_SUFFIX="" \
+  -DGMX_SIMD=AVX2_256 \
   ..
 
 make -j4
