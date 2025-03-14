@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module purge
-module load compiler/gcc/10 openmpi/4.1 intel-mkl/20 fftw3/3.3 cmake/3.20 cuda/11.6 autotools/1.0 python/3.9 flex/2.6
+module load compiler/gcc/10 openmpi/4.1 intel-mkl/20 fftw3/3.3 cmake/3.20 cuda/12.4 autotools/1.0 python/3.9 flex/2.6
 
 mkdir -p /util/opt/ambertools/24/gcc/10/openmpi/4.1
 
