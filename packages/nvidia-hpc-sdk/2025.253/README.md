@@ -1,0 +1,1 @@
+NVIDIA HPC SDK 2025.253 with cuda 12.8 and 11.8
