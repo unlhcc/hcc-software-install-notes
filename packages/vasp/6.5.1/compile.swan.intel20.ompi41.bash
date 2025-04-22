@@ -10,9 +10,9 @@ export LIBBEEF_ROOT=$LIBBEEF
 export LIBXC_ROOT=$LIBXC
 export DFTD4_ROOT=$DFTD4
 
-rm -f makefile.include && cp makefile.include.intel_ompi_mkl_omp_avx2 makefile.include
+rm -f makefile.include && cp makefile.include.intel_ompi_mkl_omp makefile.include
 make veryclean
 make DEPS=1 -j 4 all
 
-# mkdir -p /util/opt/vasp/6.4.3/intel/20/openmpi/4.1/bin/
-# cp bin/* /util/opt/vasp/6.4.3/intel/20/openmpi/4.1/bin/
+# mkdir -p /util/opt/vasp/6.5.1/intel/20/openmpi/4.1/bin/
+# cp bin/* /util/opt/vasp/6.5.1/intel/20/openmpi/4.1/bin/
