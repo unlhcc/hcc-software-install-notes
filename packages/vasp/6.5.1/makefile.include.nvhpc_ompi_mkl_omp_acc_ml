@@ -118,11 +118,11 @@ INCS       += -I$(MKLROOT)/include/fftw
 #LLIBS      += -ldl
 
 # For machine learning library vaspml (experimental)
-#CPP_OPTIONS += -Dlibvaspml
-#CPP_OPTIONS += -DVASPML_USE_CBLAS
-#CPP_OPTIONS += -DVASPML_DEBUG_LEVEL=3
-#CXX_ML      = mpic++ -mp
-#CXXFLAGS_ML = -O3 -std=c++17 -Wall -Wextra
+CPP_OPTIONS += -Dlibvaspml
+CPP_OPTIONS += -DVASPML_USE_CBLAS
+CPP_OPTIONS += -DVASPML_DEBUG_LEVEL=3
+CXX_ML      = mpic++ -mp
+CXXFLAGS_ML = -O3 -std=c++17 -Wall -Wextra
 #INCLUDE_ML  =
 
 # Add -gpu=tripcount:host to compiler commands for NV HPC-SDK > 25.1
